@@ -306,9 +306,15 @@ function askName(){
     const n=$('#nn').value.trim(),u=$('#un').value.trim().toLowerCase().replace(/^@/,'');
     if(!n||!/^[a-z0-9_]{3,20}$/.test(u))return toast('Юзернейм: 3–20 символов, a-z, 0-9, _');
     try{
-      if(!P||P.username!==u){const s=await db.doc('usernames/'+u).get();if(s.exists&&s.data().uid!==uid)return toast('Юзернейм занят');
+      if(!P||P.username!==u){const s=await db.doc('usernames/'+u).get();if(s.exists&&s.data().uid!==uid){
+          const old=s.data().uid,op=PR[old];
+          if(!op||op.auth||!confirm('Юзернейм @'+u+' уже создан до входа по паролю. Это твой старый аккаунт? Нажми ОК, чтобы перенести в новый аккаунт его баланс, подарки и профиль.'))return toast('Юзернейм занят');
+          window.MIG=op;
+          for(const i of ITEMS.filter(x=>x.owner===old))await db.doc('items/'+i.id).update({owner:uid});
+        }
         await db.doc('usernames/'+u).set({uid});if(P)await db.doc('usernames/'+P.username).delete().catch(()=>{})}
-      await db.doc('profiles/'+uid).set({...(P||{coins:30}),name:n,username:u,uid,created:(P&&P.created)||Date.now()});
+      await db.doc('profiles/'+uid).set({...(P||window.MIG||{coins:30}),name:n,username:u,uid,auth:true,created:(P&&P.created)||(window.MIG&&window.MIG.created)||Date.now()});
+      if(window.MIG){await db.doc('profiles/'+window.MIG.uid).delete().catch(()=>{});window.MIG=null}
       S.name=n;store.set('name',n);closeModal();
     }catch(e){toast('Ошибка')}};
 }

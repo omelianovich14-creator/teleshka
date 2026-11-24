@@ -92,6 +92,7 @@ body.lt{--bg:#f6f4fb;--card:#fff;--text:#1d1b26;--muted:#7b7890;--line:#e6e2f0;-
 <link rel="apple-touch-icon" href="icon.png">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="config.js"></script>
 <script>
 /* Firebase (база) и Cloudinary (файлы) вместо хостинга Claude */
@@ -104,7 +105,40 @@ body.lt{--bg:#f6f4fb;--card:#fff;--text:#1d1b26;--muted:#7b7890;--line:#e6e2f0;-
     const j=await r.json();if(!j.secure_url)throw new Error(j.error&&j.error.message||'upload');
     return {id:j.public_id,url:j.secure_url};
   }
-  window.claude={use:async n=>n==='db'?fs:n==='assets'?{upload}:null};
+  let authP=null;
+  function gate(){
+    if(authP)return authP;
+    return authP=new Promise(res=>{
+      const au=firebase.auth(),ov=document.createElement('div');
+      const inp='padding:13px 14px;border-radius:14px;border:1px solid #e6e2f0;font:16px inherit;outline:none;width:100%';
+      const btn='border:0;border-radius:14px;padding:13px;font:700 16px inherit;cursor:pointer;';
+      ov.style.cssText='position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7c5cff,#ff6ba0);padding:20px;font-family:-apple-system,"Segoe UI",sans-serif';
+      ov.innerHTML='<div style="background:#fff;color:#1d1b26;border-radius:22px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px"><div style="font-size:26px;font-weight:800">🛒 Тележка</div><div style="color:#7b7890;font-size:14px">Войди или создай аккаунт. Пароль спрашивается только при входе.</div><input id="lg-u" placeholder="юзернейм (a-z, 0-9, _)" autocapitalize="none" autocorrect="off" style="'+inp+'"><input id="lg-p" type="password" placeholder="пароль (от 6 символов)" style="'+inp+'"><div id="lg-e" style="color:#d33;font-size:14px;min-height:18px"></div><button id="lg-in" style="'+btn+'background:#7c5cff;color:#fff">Войти</button><button id="lg-up" style="'+btn+'background:#ece8f7;color:#1d1b26">Создать аккаунт</button></div>';
+      const $=q=>ov.querySelector(q);
+      async function go(up){
+        const u=$('#lg-u').value.trim().toLowerCase().replace(/^@/,''),p=$('#lg-p').value,e=$('#lg-e');e.textContent='';
+        if(!/^[a-z0-9_]{3,20}$/.test(u))return e.textContent='Юзернейм: 3–20 символов, a-z, 0-9, _';
+        if(p.length<6)return e.textContent='Пароль: минимум 6 символов';
+        try{const m=u+'@telezhka.app';up?await au.createUserWithEmailAndPassword(m,p):await au.signInWithEmailAndPassword(m,p)}
+        catch(er){const t={'auth/email-already-in-use':'Такой юзернейм уже занят','auth/invalid-credential':'Неверный юзернейм или пароль','auth/wrong-password':'Неверный юзернейм или пароль','auth/user-not-found':'Неверный юзернейм или пароль','auth/operation-not-allowed':'В Firebase не включён вход по паролю','auth/network-request-failed':'Нет связи с интернетом','auth/too-many-requests':'Слишком много попыток, подожди'};e.textContent=t[er.code]||('Ошибка: '+er.code)}
+      }
+      $('#lg-in').onclick=()=>go(false);$('#lg-up').onclick=()=>go(true);
+      au.onAuthStateChanged(u=>{
+        if(u){ov.remove();window.LOGIN_NAME=(u.email||'').split('@')[0];res(u)}
+        else if(!ov.isConnected)document.body.appendChild(ov);
+      });
+    });
+  }
+  window.claude={use:async n=>{
+    if(n==='db')return fs;
+    if(n==='assets')return {upload};
+    if(n==='user'){
+      const lo=document.getElementById('lo');
+      if(lo)lo.onclick=()=>firebase.auth().signOut().then(()=>{try{localStorage.removeItem('uid')}catch(e){}location.reload()});
+      return {id:async()=>(await gate()).uid};
+    }
+    return null;
+  }};
 })();
 </script>
 </head>
@@ -122,13 +156,13 @@ body.lt{--bg:#f6f4fb;--card:#fff;--text:#1d1b26;--muted:#7b7890;--line:#e6e2f0;-
       <div id="emo"></div><form id="f"><button type="button" class="send alt" id="em">😊</button><button type="button" class="send alt" id="ph">📎</button><input type="text" id="inp" placeholder="Сообщение…" autocomplete="off" maxlength="1000"><button class="send" type="submit">➤</button></form></div>
     </section>
     <section class="view" id="v-set">
-      <div class="box" id="prof"></div><div class="box"><h3>🎨 Кастомизация</h3>
+      <div class="box" id="adm" style="display:none"></div><div class="box" id="prof"></div><div class="box"><h3>🎨 Кастомизация</h3>
         <div class="row"><span>Тёмная тема</span><button class="sw" id="sw-dark"></button></div>
         <div class="row"><span>❄️ Снег</span><button class="sw" id="sw-snow"></button></div>
         <div class="row"><span>Цвет</span><div class="dots" id="dots"></div></div>
       </div>
       <div class="box"><h3>👤 Профиль</h3>
-        <div class="row"><span id="nm"></span><button class="btn alt" id="rn">Сменить ник</button></div>
+        <div class="row"><span id="nm"></span><span style="display:flex;gap:6px"><button class="btn alt" id="rn">Сменить ник</button><button class="btn alt" id="lo">Выйти</button></span></div>
       </div>
     </section>
   </main>
@@ -267,14 +301,14 @@ function reward(id){const v=vids.find(x=>x.id===id);if(v&&v.uid!==uid)db.doc('pr
 function av(p,s){p=p||{};return p.avatar?`<img src="${esc(p.avatar)}" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;border:3px solid var(--card)">`:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;border:3px solid var(--card)">${esc((p.name||'?')[0]).toUpperCase()}</div>`}
 function askName(){
   modal('Профиль','<input type="text" id="nn" maxlength="20" placeholder="Имя"><input type="text" id="un" maxlength="20" placeholder="юзернейм (a-z, 0-9, _)"><button class="btn" id="ok">Готово</button>');
-  $('#nn').value=S.name||'';$('#un').value=P?P.username:'';
+  $('#nn').value=S.name||'';$('#un').value=P?P.username:(window.LOGIN_NAME||'');
   $('#ok').onclick=async()=>{
     const n=$('#nn').value.trim(),u=$('#un').value.trim().toLowerCase().replace(/^@/,'');
     if(!n||!/^[a-z0-9_]{3,20}$/.test(u))return toast('Юзернейм: 3–20 символов, a-z, 0-9, _');
     try{
       if(!P||P.username!==u){const s=await db.doc('usernames/'+u).get();if(s.exists&&s.data().uid!==uid)return toast('Юзернейм занят');
         await db.doc('usernames/'+u).set({uid});if(P)await db.doc('usernames/'+P.username).delete().catch(()=>{})}
-      await db.doc('profiles/'+uid).set({...(P||{coins:30}),name:n,username:u,uid});
+      await db.doc('profiles/'+uid).set({...(P||{coins:30}),name:n,username:u,uid,created:(P&&P.created)||Date.now()});
       S.name=n;store.set('name',n);closeModal();
     }catch(e){toast('Ошибка')}};
 }
@@ -426,6 +460,34 @@ function syncUI(){const o=P&&P.ui;if(!o||Date.now()-uiLock<4000)return;
 const _at=applyTheme;applyTheme=function(){_at();persistUI()};
 const _rp=renderProf;renderProf=function(){_rp();syncUI()};
 
+/* ---- панель разработчика ---- */
+const isAdmin=()=>P&&typeof ADMIN_USERNAME!=='undefined'&&ADMIN_USERNAME&&P.username===ADMIN_USERNAME;
+let seenSent=0;
+function renderAdmin(){
+  const b=$('#adm');if(!b)return;
+  if(!isAdmin()){b.style.display='none';b.innerHTML='';return}
+  b.style.display='block';
+  const us=Object.keys(PR).map(id=>({id,...PR[id]})),now=Date.now(),D=864e5;
+  const act=d=>us.filter(u=>u.seen&&now-u.seen<d).length;
+  const visits=us.reduce((a,u)=>a+(u.visits||0),0),coins=us.reduce((a,u)=>a+(u.coins||0),0);
+  b.innerHTML=`<h3>🛠 Панель разработчика</h3>
+   <div class="row"><span>Всего аккаунтов</span><b>${us.length}</b></div>
+   <div class="row"><span>Новых за 24 часа</span><b>${us.filter(u=>u.created&&now-u.created<D).length}</b></div>
+   <div class="row"><span>Заходили за 24 часа</span><b>${act(D)}</b></div>
+   <div class="row"><span>Заходили за 7 дней</span><b>${act(7*D)}</b></div>
+   <div class="row"><span>Всего заходов (считаются с этого обновления)</span><b>${visits}</b></div>
+   <div class="row"><span>Видео в ленте / подарков выдано</span><b>${vids.length} / ${ITEMS.length}</b></div>
+   <div class="row"><span>Тележкоинов у всех</span><b>🪙 ${coins}</b></div>
+   <h3 style="margin-top:12px">Выдать тележкоины (нажми на человека)</h3>
+   <div id="al">${us.sort((a,c)=>(c.seen||0)-(a.seen||0)).map(u=>`<div class="item" data-u="${esc(u.id)}" style="margin-bottom:6px">${av(u,36)}<div><b>${esc(u.name||'?')}</b><small>@${esc(u.username||'')} · 🪙 ${u.coins||0}${u.seen?' · '+new Date(u.seen).toLocaleDateString('ru'):''}</small></div></div>`).join('')}</div>`;
+  $('#al').onclick=e=>{const it=e.target.closest('.item');if(!it)return;const id=it.dataset.u,u=PR[id];if(!u)return;
+    const v=prompt('Сколько тележкоинов выдать для @'+u.username+'? (отрицательное число забирает)','100');if(v===null)return;
+    const n=parseInt(v,10);if(!n)return toast('Введи число');
+    db.doc('profiles/'+id).update({coins:(u.coins||0)+n}).then(()=>toast((n>0?'+':'')+n+' 🪙 → @'+u.username)).catch(()=>toast('Ошибка'))};
+}
+const _rp2=renderProf;renderProf=function(){_rp2();renderAdmin();
+  if(P&&!seenSent&&db){seenSent=1;save({seen:Date.now(),visits:(P.visits||0)+1})}};
+
 /* ---- boot ---- */
 async function boot(){
   applyTheme();
@@ -433,7 +495,7 @@ async function boot(){
   let timer=setTimeout(()=>{if(!db)$('#feed').innerHTML='<div class="empty"><div class="big">🔒</div>Не удалось подключиться к базе.<br>Проверь config.js и правила Firestore.</div>'},10000);
   try{
     const user=await claude.use('user');
-    if(user&&!uid){uid=await user.id();store.set('uid',uid)}
+    if(user){uid=await user.id();store.set('uid',uid)}
     db=await claude.use('db');
   }catch(e){}
   if(!uid){uid='u'+Math.random().toString(36).slice(2,10);store.set('uid',uid)}

@@ -11,3 +11,6 @@ const FIREBASE_CONFIG = {
 // Cloudinary: заполнено.
 const CLOUDINARY_CLOUD  = "glvw5yh9";
 const CLOUDINARY_PRESET = "Coderovka";
+
+// Панель разработчика: видна только этому юзернейму.
+const ADMIN_USERNAME = "s1ntex";

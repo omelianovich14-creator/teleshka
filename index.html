@@ -162,11 +162,11 @@ nav button svg{display:block}
       <div id="feed"><div class="empty"><div class="big">🎬</div>Загрузка…</div></div>
     </section>
     <section class="view" id="v-chat">
-      <div id="list"></div><div id="ch"><div class="bar"><button id="bk">‹</button><b id="ct"></b><button id="gf">🎁</button></div><div id="msgs"></div>
+      <div id="list"></div><div id="ch"><div class="bar"><button id="bk">‹</button><b id="ct"></b><button id="gf">🎁</button><button id="dl">🗑</button></div><div id="msgs"></div>
       <div id="emo"></div><form id="f"><button type="button" class="send alt" id="em">😊</button><button type="button" class="send alt" id="ph">📎</button><input type="text" id="inp" placeholder="Сообщение…" autocomplete="off" maxlength="1000"><button class="send" type="submit">➤</button></form></div>
     </section>
     <section class="view" id="v-set">
-      <div class="box" id="nbox"></div><div class="box" id="adm" style="display:none"></div><div class="box" id="prof"></div><div class="box" id="pbox"></div><div class="box"><h3>🎨 Кастомизация</h3>
+      <div class="box" id="nbox"></div><div class="box" id="adm" style="display:none"></div><div class="box" id="prof"></div><div class="box" id="ebox"></div><div class="box" id="pbox"></div><div class="box"><h3>🎨 Кастомизация</h3>
         <div class="row"><span>Тёмная тема</span><button class="sw" id="sw-dark"></button></div>
         <div class="row"><span>❄️ Снег</span><button class="sw" id="sw-snow"></button></div>
         <div class="row"><span>Цвет</span><div class="dots" id="dots"></div></div>
@@ -310,7 +310,7 @@ const save=p=>db.doc('profiles/'+uid).update(p).catch(()=>toast('Ошибка с
 function reward(id){const v=vids.find(x=>x.id===id);if(v&&v.uid!==uid)db.doc('profiles/'+v.uid).update({coins:((PR[v.uid]||{}).coins||0)+1}).catch(()=>{})}
 function av(p,s){p=p||{};return p.avatar?`<img src="${esc(p.avatar)}" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;border:3px solid ${isPrem(p)?'#ffc83d':'var(--card)'}">`:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;border:3px solid ${isPrem(p)?'#ffc83d':'var(--card)'}">${esc((p.name||'?')[0]).toUpperCase()}</div>`}
 function askName(){
-  modal('Профиль · v7','<input type="text" id="nn" maxlength="20" placeholder="Имя"><input type="text" id="un" maxlength="20" placeholder="юзернейм (a-z, 0-9, _)"><button class="btn" id="ok">Готово</button>');
+  modal('Профиль · v8','<input type="text" id="nn" maxlength="20" placeholder="Имя"><input type="text" id="un" maxlength="20" placeholder="юзернейм (a-z, 0-9, _)"><button class="btn" id="ok">Готово</button>');
   $('#nn').value=S.name||'';$('#un').value=P?P.username:(window.LOGIN_NAME||'');
   $('#ok').onclick=async()=>{
     const n=$('#nn').value.trim(),u=$('#un').value.trim().toLowerCase().replace(/^@/,'');
@@ -580,6 +580,98 @@ function groupInfo(){const t=TH.find(x=>x.id===cur.tid);if(!t)return;
   $('#gad').onclick=async()=>{const u=$('#ga').value.trim().toLowerCase().replace(/^@/,'');if(!u)return;
     try{const s=await db.doc('usernames/'+u).get();if(!s.exists)return toast('Не найден');await db.doc('threads/'+t.id).update({members:firebase.firestore.FieldValue.arrayUnion(s.data().uid)});closeModal();toast('Добавлен')}catch(e){toast('Ошибка')}};
   $('#glv').onclick=async()=>{if(!confirm('Выйти из группы?'))return;try{await db.doc('threads/'+t.id).update({members:firebase.firestore.FieldValue.arrayRemove(uid)});closeModal();$('#bk').click()}catch(e){toast('Ошибка')}}}
+
+/* ---- онлайн, заработок, колесо, апгрейд, удаление чатов ---- */
+const online=p=>!!(p&&!p.hideSeen&&p.seen&&Date.now()-p.seen<18e4);
+function ago(p){if(!p)return '';if(p.hideSeen)return 'был(а) недавно';if(online(p))return 'в сети';if(!p.seen)return 'давно не был(а)';
+  const d=new Date(p.seen);return 'был(а) '+(d.toDateString()===new Date().toDateString()?d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('ru'))}
+const beat=()=>{if(P&&!document.hidden&&!P.hideSeen)save({seen:Date.now()})};
+setInterval(beat,9e4);document.addEventListener('visibilitychange',beat);
+function updHdr(){if(!$('#ch').classList.contains('on'))return;let sub='';
+  if(cur.group){const t=TH.find(x=>x.id===cur.tid);if(t)sub=t.members.length+' участн., '+t.members.filter(m=>m===uid||online(PR[m])).length+' в сети'}
+  else if(cur.other)sub=ago(PR[cur.other]);
+  else if(cur.gen)sub=Object.values(PR).filter(online).length+' в сети';
+  $('#ct').innerHTML=esc(cur.title||'')+(sub?'<small style="display:block;font-weight:400;font-size:12px;color:var(--muted)">'+sub+'</small>':'')}
+setInterval(()=>{updHdr();if(TH)renderList()},6e4);
+const _rl4=renderList;renderList=function(){_rl4();const l=$('#list');if(!l)return;
+  TH.forEach(t=>{if(t.group)return;const el=[...l.querySelectorAll('.item')].find(x=>x.dataset.t===t.id),o=t.members.find(m=>m!==uid);
+    if(el&&online(PR[o])){el.style.position='relative';el.insertAdjacentHTML('afterbegin','<i style="position:absolute;left:46px;top:44px;width:13px;height:13px;border-radius:50%;background:#34c759;border:2px solid var(--card)"></i>')}})};
+const _oc4=openConv;openConv=function(c){_oc4(c);const t=TH.find(x=>x.id===cur.tid);$('#dl').style.display=(cur.tid&&!(t&&t.group&&t.owner!==uid))?'':'none';updHdr()};
+const _rn=renderNotif;renderNotif=function(){_rn();const b=$('#nbox');if(!b||!P)return;
+  b.insertAdjacentHTML('beforeend','<div class="row"><span>Показывать, что я в сети</span><button class="sw '+(P.hideSeen?'':'on')+'" id="hs"></button></div>');
+  $('#hs').onclick=()=>save({hideSeen:!P.hideSeen})};
+/* удаление чатов и исключение из групп */
+async function delChat(t){const q=await db.collection('threads/'+t.id+'/msgs').get();for(const d of q.docs)await d.ref.delete();await db.doc('threads/'+t.id).delete()}
+$('#dl').onclick=async()=>{const t=TH.find(x=>x.id===cur.tid);if(!t)return;
+  if(!confirm(t.group?'Удалить группу для всех участников?':'Удалить чат? Переписка пропадёт у вас обоих.'))return;
+  try{await delChat(t);$('#bk').click();toast('Чат удалён')}catch(e){toast('Ошибка')}};
+function groupInfo(){const t=TH.find(x=>x.id===cur.tid);if(!t)return;const own=t.owner===uid,AR=firebase.firestore.FieldValue.arrayRemove;
+  modal(t.name,`<b>Участники (${t.members.length})</b>${t.members.map(m=>`<div class="item" data-p="${esc(m)}">${av(PR[m],36)}<div><b>${nameHTML(PR[m]||{name:'…'})}${m===t.owner?' 👑':''}</b><small>@${esc((PR[m]||{}).username||'')} · ${m===uid?'вы':ago(PR[m])}</small></div>${own&&m!==uid?`<button class="btn alt" data-k="${esc(m)}" style="margin-left:auto;padding:6px 10px">Исключить</button>`:''}</div>`).join('')}${own?'<input type="text" id="ga" placeholder="Добавить: @username" autocapitalize="none"><button class="btn" id="gad">Добавить</button>':''}<button class="btn alt" id="glv">Выйти из группы</button>`);
+  $('#mb').onclick=async e=>{const k=e.target.closest('[data-k]');
+    if(k){if(!confirm('Исключить участника?'))return;try{await db.doc('threads/'+t.id).update({members:AR(k.dataset.k)});closeModal();toast('Исключён')}catch(er){toast('Ошибка')}return}
+    const it=e.target.closest('[data-p]');if(it){closeModal();viewProfile(it.dataset.p)}};
+  if($('#gad'))$('#gad').onclick=async()=>{const u=$('#ga').value.trim().toLowerCase().replace(/^@/,'');if(!u)return;
+    try{const s=await db.doc('usernames/'+u).get();if(!s.exists)return toast('Не найден');await db.doc('threads/'+t.id).update({members:firebase.firestore.FieldValue.arrayUnion(s.data().uid)});closeModal();toast('Добавлен')}catch(er){toast('Ошибка')}};
+  $('#glv').onclick=async()=>{if(!confirm('Выйти из группы?'))return;
+    try{const rest=t.members.filter(m=>m!==uid);
+      if(own&&!rest.length)await delChat(t);else await db.doc('threads/'+t.id).update(own?{members:AR(uid),owner:rest[0]}:{members:AR(uid)});
+      closeModal();$('#bk').click()}catch(er){toast('Ошибка')}}}
+/* апгрейд и продажа подарков */
+const BDX=[['#f7971e','#ffd200'],['#8e2de2','#4a00e0'],['#00c6ff','#0072ff'],['#f953c6','#b91d73']];
+function card(it){const g=GM[it.type],lv=it.lvl||0,bg=lv>=2?BDX[it.bd%4]:BD[it.bd];
+  return `<div class="gc ${it.shown?'sh':''} ${g.rar==='Легендарный'||lv>=3?'leg':''}" data-i="${it.id||''}" style="background:linear-gradient(160deg,${bg[0]},${bg[1]})"><div class="pt">${(PT[it.pt]+' ').repeat(30)}</div><i class="r">${g.rar}${lv?' · '+'★'.repeat(lv):''}</i><div class="ge a-${g.id}">${g.svg||g.e}</div><b>${g.n}</b><small>${it.serial==='?'?'тираж '+g.supply:'#'+it.serial+' из '+g.supply}</small></div>`}
+function itemMenu(e){const c=e.target.closest('.gc');if(!c)return;const it=ITEMS.find(x=>x.id===c.dataset.i);if(!it)return;
+  const g=GM[it.type],lv=it.lvl||0,cost=Math.max(20,Math.floor(g.price*.5))*(lv+1),sell=Math.floor(g.price*.6*(1+.5*lv));
+  modal(g.n,`<div style="width:150px;margin:auto">${card(it)}</div><button class="btn alt" id="i1">${it.shown?'Убрать из профиля':'📌 Выставить в профиль'}</button>${lv>=3?'<small style="text-align:center;color:var(--muted)">Максимальный уровень ★★★</small>':isPrem(P)?`<button class="btn" id="i2">⬆️ Улучшить до ★${lv+1} · ${cost} 🪙</button>`:'<small style="text-align:center;color:var(--muted)">⭐ Улучшение подарков доступно с Премиумом</small>'}<button class="btn alt" id="i3">💰 Продать · ${sell} 🪙</button>`);
+  $('#i1').onclick=()=>{db.doc('items/'+it.id).update({shown:!it.shown});closeModal()};
+  if($('#i2'))$('#i2').onclick=async()=>{if((P.coins||0)<cost)return toast('Не хватает '+cost+' 🪙');closeModal();
+    try{await save({coins:P.coins-cost});await db.doc('items/'+it.id).update({lvl:lv+1,bd:Math.floor(Math.random()*8),pt:Math.floor(Math.random()*6)});toast('✨ Улучшено до ★'+(lv+1))}catch(er){toast('Ошибка')}};
+  $('#i3').onclick=async()=>{if(!confirm('Продать за '+sell+' 🪙?'))return;closeModal();
+    try{await db.doc('items/'+it.id).delete();await save({coins:(P.coins||0)+sell});toast('+'+sell+' 🪙')}catch(er){toast('Ошибка')}}}
+/* задания, достижения */
+const QT=[['m','Отправь 10 сообщений',10,4],['l','Поставь 5 лайков',5,3],['g','Напиши в общий чат',1,2]];
+function bump(...ks){if(!P)return;const d=new Date().toDateString(),q=(P.q&&P.q.d===d)?{...P.q,c:{...(P.q.c||{})}}:{d,m:0,l:0,g:0,c:{}};let ch=0;
+  for(const k of ks){const t=QT.find(x=>x[0]===k);if((q[k]||0)<t[2]){q[k]=(q[k]||0)+1;ch=1}}if(ch)save({q})}
+const _send=send;send=async function(o){const r=await _send(o);if(r)bump(...(cur.path==='messages'?['m','g']:['m']));return r};
+$('#feed').addEventListener('click',e=>{const b=e.target.closest('button[data-a="like"]');if(b&&!b.classList.contains('liked'))bump('l')},true);
+const AW={};
+async function award(k,n){if(AW[k]||!P||(P.ach&&P.ach[k]))return;AW[k]=1;await save({coins:(P.coins||0)+n,['ach.'+k]:true});toast('🏆 +'+n+' 🪙 за достижение')}
+function achCheck(){if(!P)return;
+  if(TH.some(t=>t.group&&t.owner===uid))award('group',10);
+  if(P.avatar)award('avatar',5);
+  if(ITEMS.some(i=>i.owner!==uid&&i.from===P.name))award('gift',10);
+  if((P.streak||0)>=7)award('streak7',30);
+  if(P.wheelAt)award('wheel',5)}
+/* колесо фортуны */
+const WS=[25,50,75,100,150,250,500,'🎁'],WC=['#ff9a9e','#a18cd1','#84fab0','#f6d365','#667eea','#fa709a','#ffb347','#43e97b'],WCOST=100;let spinning=0;
+function wheelSVG(){let h='<svg viewBox="-100 -100 200 200" id="wh" style="width:240px;height:240px;transition:transform 4s cubic-bezier(.17,.67,.12,1)">';
+  WS.forEach((w,i)=>{const a0=(i*45-112.5)*Math.PI/180,a1=(i*45-67.5)*Math.PI/180,am=(i*45-90)*Math.PI/180,tx=62*Math.cos(am),ty=62*Math.sin(am);
+    h+=`<path d="M0 0L${95*Math.cos(a0)} ${95*Math.sin(a0)}A95 95 0 0 1 ${95*Math.cos(a1)} ${95*Math.sin(a1)}Z" fill="${WC[i]}"/><text x="${tx}" y="${ty+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#fff" transform="rotate(${i*45} ${tx} ${ty})">${w}</text>`});
+  return h+'<circle r="10" fill="#fff"/></svg>'}
+async function spin(){if(spinning||!P)return;
+  if((P.coins||0)<WCOST)return toast('Нужно '+WCOST+' 🪙');
+  if((P.wheelAt||0)+(isPrem(P)?2:3)*864e5>Date.now())return toast('Колесо ещё отдыхает');
+  const W=[[25,30],[50,25],[75,15],[100,10],[150,7],[250,4],[500,2],['gc',5],['gr',2]],pool={gc:['bear','rose','heart','ghost'],gr:['cake','gem','frog','rocket']};
+  let r=Math.random()*100,o=25;for(const [k,w] of W){if(r<w){o=k;break}r-=w}
+  let coins=typeof o==='number'?o:0,gift=coins?null:pool[o][Math.floor(Math.random()*4)];
+  spinning=1;$('#sp').disabled=true;
+  $('#wh').style.transform='rotate('+(1800-(typeof o==='number'?WS.indexOf(o):7)*45+(Math.random()*24-12))+'deg)';
+  try{
+    if(gift){const g=GM[gift],sr=db.doc('supply/'+gift),sn=await sr.get(),n=((sn.exists&&sn.data().n)||0)+1;
+      if(n>g.supply){gift=null;coins=WCOST}else{await sr.set({n});await db.collection('items').add({type:gift,serial:n,bd:Math.floor(Math.random()*8),pt:Math.floor(Math.random()*6),owner:uid,from:'Колесо',shown:false,ts:Date.now()})}}
+    await save({coins:(P.coins||0)-WCOST+coins,wheelAt:Date.now()});
+  }catch(e){spinning=0;return toast('Ошибка')}
+  setTimeout(()=>{spinning=0;toast(gift?'🎁 Выпал подарок: '+GM[gift].n+'!':'+'+coins+' 🪙');renderEarn()},4300)}
+function renderEarn(){const b=$('#ebox');if(!b||!P||spinning)return;
+  const d=new Date().toDateString(),q=(P.q&&P.q.d===d)?P.q:{d,m:0,l:0,g:0,c:{}},left=(P.wheelAt||0)+(isPrem(P)?2:3)*864e5-Date.now(),ready=left<=0;
+  const ach=[['group','Создать группу',10],['avatar','Загрузить аватар',5],['gift','Подарить подарок другу',10],['streak7','Заходить 7 дней подряд',30],['wheel','Покрутить колесо',5]];
+  b.innerHTML='<h3>🎯 Задания на сегодня</h3>'+QT.map(t=>{const v=Math.min(q[t[0]]||0,t[2]),done=v>=t[2],cl=q.c&&q.c[t[0]];
+    return `<div class="row"><span>${t[1]} <small style="color:var(--muted)">${v}/${t[2]}</small></span>${cl?'<small>✓ получено</small>':done?`<button class="btn" data-q="${t[0]}">+${t[3]} 🪙</button>`:`<small>+${t[3]} 🪙</small>`}</div>`}).join('')
+  +'<h3 style="margin-top:12px">🏆 Достижения (один раз)</h3>'+ach.map(a=>`<div class="row"><span>${P.ach&&P.ach[a[0]]?'✅':'⬜'} ${a[1]}</span><small>+${a[2]} 🪙</small></div>`).join('')
+  +`<h3 style="margin-top:12px">🎡 Колесо фортуны</h3><small style="color:var(--muted)">От 25 до 500 🪙 или подарок. Спин стоит ${WCOST} 🪙, раз в ${isPrem(P)?2:3} дня${isPrem(P)?' (у вас Премиум)':''}.</small><div style="position:relative;width:240px;margin:10px auto"><div style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:22px;z-index:2">▼</div>${wheelSVG()}</div><button class="btn" id="sp" style="width:100%" ${ready?'':'disabled'}>${ready?'Крутить · '+WCOST+' 🪙':'Следующий спин через '+Math.ceil(left/36e5)+' ч'}</button>`;
+  b.querySelectorAll('[data-q]').forEach(x=>x.onclick=()=>{const t=QT.find(y=>y[0]===x.dataset.q);save({coins:(P.coins||0)+t[3],q:{...q,c:{...(q.c||{}),[t[0]]:true}}});toast('+'+t[3]+' 🪙')});
+  $('#sp').onclick=spin}
+const _rp4=renderProf;renderProf=function(){_rp4();renderEarn();const inv=$('#inv');if(inv)inv.onclick=itemMenu;achCheck();updHdr();renderNotif()};
 
 /* ---- boot ---- */
 async function boot(){

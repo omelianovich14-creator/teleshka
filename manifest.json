@@ -1,0 +1,10 @@
+{
+  "name": "Тележка",
+  "short_name": "Тележка",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#12111a",
+  "theme_color": "#7c5cff",
+  "icons": [{"src": "icon.png", "sizes": "180x180", "type": "image/png"}]
+}

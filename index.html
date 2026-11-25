@@ -86,10 +86,20 @@ html{background:transparent}.view{background:var(--bg)}.box{flex-shrink:0}
 #bdg{display:none;position:absolute;top:6px;left:56%;width:10px;height:10px;border-radius:50%;background:#ff3b6b}#bdg.on{display:block}
 body.dk{--bg:#12111a;--card:#1c1a27;--text:#f1eefb;--muted:#9a96b3;--line:#2c2940;--theirs:#2a2740;--theirs-t:#f1eefb}
 body.lt{--bg:#f6f4fb;--card:#fff;--text:#1d1b26;--muted:#7b7890;--line:#e6e2f0;--theirs:#ece8f7;--theirs-t:#1d1b26}
+nav button svg{display:block}
+.ge svg{width:66px;height:66px;overflow:visible}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes fly{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(3px,-7px) rotate(5deg)}}
+.a-frog svg,.a-ghost svg{animation:bob 1.7s ease-in-out infinite}.a-heart svg{animation:pulse 1s ease-in-out infinite}
+.a-frog .pu,.a-ghost .pu{transform-box:fill-box;transform-origin:center;animation:blink 3s infinite}
+.a-bear,.a-rose,.a-cake,.a-crown{animation:bob 2s ease-in-out infinite}.a-gem{animation:pulse 1.6s ease-in-out infinite}.a-rocket{animation:fly 1.2s ease-in-out infinite}
 </style>
 <meta name="apple-mobile-web-app-title" content="Тележка">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -156,7 +166,7 @@ body.lt{--bg:#f6f4fb;--card:#fff;--text:#1d1b26;--muted:#7b7890;--line:#e6e2f0;-
       <div id="emo"></div><form id="f"><button type="button" class="send alt" id="em">😊</button><button type="button" class="send alt" id="ph">📎</button><input type="text" id="inp" placeholder="Сообщение…" autocomplete="off" maxlength="1000"><button class="send" type="submit">➤</button></form></div>
     </section>
     <section class="view" id="v-set">
-      <div class="box" id="adm" style="display:none"></div><div class="box" id="prof"></div><div class="box"><h3>🎨 Кастомизация</h3>
+      <div class="box" id="nbox"></div><div class="box" id="adm" style="display:none"></div><div class="box" id="prof"></div><div class="box" id="pbox"></div><div class="box"><h3>🎨 Кастомизация</h3>
         <div class="row"><span>Тёмная тема</span><button class="sw" id="sw-dark"></button></div>
         <div class="row"><span>❄️ Снег</span><button class="sw" id="sw-snow"></button></div>
         <div class="row"><span>Цвет</span><div class="dots" id="dots"></div></div>
@@ -167,9 +177,9 @@ body.lt{--bg:#f6f4fb;--card:#fff;--text:#1d1b26;--muted:#7b7890;--line:#e6e2f0;-
     </section>
   </main>
   <nav>
-    <button class="on" data-v="feed"><span>🎬</span>Лента</button>
-    <button data-v="chat" style="position:relative"><span>💬</span>Чат<i id="bdg"></i></button>
-    <button data-v="set"><span>⚙️</span>Настройки</button>
+    <button class="on" data-v="feed"><span><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="4.5"/><path d="M10 9v6l5-3z" fill="currentColor"/></svg></span>Лента</button>
+    <button data-v="chat" style="position:relative"><span><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.6L3.5 20.5l1.5-4.7A8.5 8.5 0 1 1 21 11.5z"/><circle cx="8.5" cy="11.5" r=".8" fill="currentColor"/><circle cx="12.5" cy="11.5" r=".8" fill="currentColor"/><circle cx="16.5" cy="11.5" r=".8" fill="currentColor"/></svg></span>Чат<i id="bdg"></i></button>
+    <button data-v="set"><span><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg></span>Настройки</button>
   </nav>
   <div id="modal"><div class="sheet">
     <b id="mt"></b><div id="mb"></div>
@@ -298,9 +308,9 @@ const GIFTS=[['🧸',10],['🌹',25],['🎂',40],['💎',100],['🚀',250],['�
 const PR={},G=[];let P=null,TH=[],unM=null,cur={path:'messages',gen:1};
 const save=p=>db.doc('profiles/'+uid).update(p).catch(()=>toast('Ошибка сохранения'));
 function reward(id){const v=vids.find(x=>x.id===id);if(v&&v.uid!==uid)db.doc('profiles/'+v.uid).update({coins:((PR[v.uid]||{}).coins||0)+1}).catch(()=>{})}
-function av(p,s){p=p||{};return p.avatar?`<img src="${esc(p.avatar)}" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;border:3px solid var(--card)">`:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;border:3px solid var(--card)">${esc((p.name||'?')[0]).toUpperCase()}</div>`}
+function av(p,s){p=p||{};return p.avatar?`<img src="${esc(p.avatar)}" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;border:3px solid ${isPrem(p)?'#ffc83d':'var(--card)'}">`:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;border:3px solid ${isPrem(p)?'#ffc83d':'var(--card)'}">${esc((p.name||'?')[0]).toUpperCase()}</div>`}
 function askName(){
-  modal('Профиль · v5','<input type="text" id="nn" maxlength="20" placeholder="Имя"><input type="text" id="un" maxlength="20" placeholder="юзернейм (a-z, 0-9, _)"><button class="btn" id="ok">Готово</button>');
+  modal('Профиль · v7','<input type="text" id="nn" maxlength="20" placeholder="Имя"><input type="text" id="un" maxlength="20" placeholder="юзернейм (a-z, 0-9, _)"><button class="btn" id="ok">Готово</button>');
   $('#nn').value=S.name||'';$('#un').value=P?P.username:(window.LOGIN_NAME||'');
   $('#ok').onclick=async()=>{
     const n=$('#nn').value.trim(),u=$('#un').value.trim().toLowerCase().replace(/^@/,'');
@@ -323,7 +333,7 @@ $('#rn').onclick=askName;
 function renderProf(){
   const p=P,b=$('#prof');if(!p){b.innerHTML='';return}
   const f=FONTS[p.font]||'inherit';
-  b.innerHTML=`<div class="ban" style="background:${p.banner||BANNERS[0]}"></div><div style="display:flex;gap:12px;align-items:flex-end;position:relative">${av(p,68)}<div><div style="font:800 20px ${f}">${esc(p.name)}</div><small style="color:var(--muted)">@${esc(p.username)}</small></div><div style="margin-left:auto;font-weight:800">${CUR} ${p.coins||0}</div></div>
+  b.innerHTML=`<div class="ban" style="background:${bnr(p)}"></div><div style="display:flex;gap:12px;align-items:flex-end;position:relative">${av(p,68)}<div><div style="font:800 20px ${f}">${nameHTML(p)}</div><small style="color:var(--muted)">@${esc(p.username)}</small></div><div style="margin-left:auto;font-weight:800">${CUR} ${p.coins||0}</div></div>
   <div class="row"><span>Подарки: ${G.map(g=>g.emoji).join(' ')||'пока нет'}</span></div>
   <div class="row"><button class="btn" id="bn" ${p.bonus===new Date().toDateString()?'disabled':''}>Бонус +25 ${CUR}</button><button class="btn alt" id="ap">Сменить аватар</button></div>
   <div class="dots" style="margin:8px 0">${BANNERS.map((x,i)=>`<div class="dot" data-i="${i}" style="background:${x}"></div>`).join('')}</div>
@@ -336,7 +346,7 @@ function renderProf(){
 function renderList(){
   const keep=($('#fu')||{}).value||'';
   $('#list').innerHTML=`<div class="box"><b>Добавьте друга по юзернейму</b><div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="fu" placeholder="@username" autocapitalize="none"><button class="btn" id="fa">Добавить</button></div></div><div class="item" data-t="gen"><div style="font-size:32px">🌍</div><div><b>Общий чат</b><small>Все участники</small></div></div>`+
-  TH.sort((a,b)=>b.ts-a.ts).map(t=>{const p=PR[t.members.find(m=>m!==uid)]||{};return `<div class="item" data-t="${esc(t.id)}">${av(p,44)}<div><b>${esc(p.name||'…')}</b><small>@${esc(p.username||'')} ${t.last?'· '+esc(t.last):''}</small></div></div>`}).join('');
+  TH.sort((a,b)=>b.ts-a.ts).map(t=>{const p=PR[t.members.find(m=>m!==uid)]||{};return `<div class="item" data-t="${esc(t.id)}">${av(p,44)}<div><b>${nameHTML(p)}</b><small>@${esc(p.username||'')} ${t.last?'· '+esc(t.last):''}</small></div></div>`}).join('');
   $('#fu').value=keep;$('#fa').onclick=addFriend;
 }
 $('#list').onclick=e=>{const i=e.target.closest('.item');if(!i)return;
@@ -380,7 +390,7 @@ $('#gf').onclick=()=>{
 const GM={};[['bear','Мишка','🧸',30,5000,'Обычный'],['rose','Роза','🌹',60,3000,'Обычный'],['cake','Торт','🎂',120,2000,'Редкий'],['gem','Алмаз','💎',300,1000,'Эпический'],['rocket','Ракета','🚀',700,500,'Эпический'],['crown','Корона','👑',1500,100,'Легендарный']].forEach(a=>GM[a[0]]={id:a[0],n:a[1],e:a[2],price:a[3],supply:a[4],rar:a[5]});
 const GL=Object.values(GM),PT=['✦','❄','♥','☆','✿','●'],BD=[['#ff9a9e','#fad0c4'],['#a18cd1','#fbc2eb'],['#84fab0','#8fd3f4'],['#f6d365','#fda085'],['#667eea','#764ba2'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],['#30cfd0','#330867']];
 let ITEMS=[],paying=0;
-function card(it){const g=GM[it.type];return `<div class="gc ${it.shown?'sh':''} ${g.rar==='Легендарный'?'leg':''}" data-i="${it.id||''}" style="background:linear-gradient(160deg,${BD[it.bd][0]},${BD[it.bd][1]})"><div class="pt">${(PT[it.pt]+' ').repeat(30)}</div><i class="r">${g.rar}</i><div class="ge">${g.e}</div><b>${g.n}</b><small>${it.serial==='?'?'тираж '+g.supply:'#'+it.serial+' из '+g.supply}</small></div>`}
+function card(it){const g=GM[it.type];return `<div class="gc ${it.shown?'sh':''} ${g.rar==='Легендарный'?'leg':''}" data-i="${it.id||''}" style="background:linear-gradient(160deg,${BD[it.bd][0]},${BD[it.bd][1]})"><div class="pt">${(PT[it.pt]+' ').repeat(30)}</div><i class="r">${g.rar}</i><div class="ge a-${g.id}">${g.svg||g.e}</div><b>${g.n}</b><small>${it.serial==='?'?'тираж '+g.supply:'#'+it.serial+' из '+g.supply}</small></div>`}
 function postReward(){if(P&&P.postDay!==new Date().toDateString()){save({coins:(P.coins||0)+5,postDay:new Date().toDateString()});toast('+5 🪙 за первое видео дня')}}
 function checkLikes(){if(!P||paying)return;
   const tot=vids.filter(v=>v.uid===uid).reduce((a,v)=>a+(likes[v.id]||[]).filter(x=>x!==uid).length,0),b=Math.floor(tot/10)-(P.blocks||0);
@@ -390,7 +400,7 @@ function reward(){}
 function renderProf(){
   const p=P,b=$('#prof');if(!p){b.innerHTML='';return}
   const f=FONTS[p.font]||'inherit',mine=ITEMS.filter(i=>i.owner===uid).sort((a,c)=>c.ts-a.ts),td=new Date().toDateString();
-  b.innerHTML=`<div class="ban" style="background:${p.banner||BANNERS[0]}"></div><div style="display:flex;gap:12px;align-items:flex-end;position:relative">${av(p,68)}<div><div style="font:800 20px ${f}">${esc(p.name)}</div><small style="color:var(--muted)">@${esc(p.username)}</small></div><div style="margin-left:auto;text-align:right"><b style="font-size:18px">🪙 ${p.coins||0}</b><small style="display:block;color:var(--muted)">тележкоины</small></div></div>
+  b.innerHTML=`<div class="ban" style="background:${bnr(p)}"></div><div style="display:flex;gap:12px;align-items:flex-end;position:relative">${av(p,68)}<div><div style="font:800 20px ${f}">${nameHTML(p)}</div><small style="color:var(--muted)">@${esc(p.username)}</small></div><div style="margin-left:auto;text-align:right"><b style="font-size:18px">🪙 ${p.coins||0}</b><small style="display:block;color:var(--muted)">тележкоины</small></div></div>
   <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="bn" ${p.bonus===td?'disabled':''}>Ежедневный бонус</button><button class="btn" id="sh">🛍 Магазин</button><button class="btn alt" id="ap">Аватар</button></div>
   <small style="color:var(--muted)">Как заработать тележкоины: заходить каждый день (серия растёт, максимум 5 за день), первое видео за день даёт 5, каждые 10 лайков на твоих видео дают 10. Тап по подарку выставляет его в профиль или убирает.</small>
   <h3 style="margin:14px 0 8px">Мои подарки (${mine.length})</h3><div class="gg" id="inv">${mine.map(card).join('')||'<small>Пока пусто — загляни в магазин</small>'}</div>
@@ -417,7 +427,7 @@ function shop(to){
       toast(to===uid?'Куплено! Смотри в профиле':'Подарок отправлен 🎁')}catch(er){toast('Ошибка')}}}
 $('#gf').onclick=()=>shop(cur.other);
 function viewProfile(u){const p=PR[u];if(!p)return;const sh=ITEMS.filter(i=>i.owner===u&&i.shown);
-  modal(' ',`<div class="ban" style="background:${p.banner||BANNERS[0]}"></div><div style="display:flex;gap:12px;align-items:flex-end;position:relative">${av(p,68)}<div><div style="font:800 20px ${FONTS[p.font]||'inherit'}">${esc(p.name)}</div><small style="color:var(--muted)">@${esc(p.username)}</small></div></div><b>Подарки</b><div class="gg">${sh.map(card).join('')||'<small>Пока ничего не выставлено</small>'}</div>`)}
+  modal(' ',`<div class="ban" style="background:${bnr(p)}"></div><div style="display:flex;gap:12px;align-items:flex-end;position:relative">${av(p,68)}<div><div style="font:800 20px ${FONTS[p.font]||'inherit'}">${nameHTML(p)}</div><small style="color:var(--muted)">@${esc(p.username)}</small></div></div><b>Подарки</b><div class="gg">${sh.map(card).join('')||'<small>Пока ничего не выставлено</small>'}</div>`)}
 $('#ct').onclick=()=>cur.other&&viewProfile(cur.other);
 function renderMsgs(snap){
   const box=$('#msgs'),end=box.scrollHeight-box.scrollTop-box.clientHeight<80;
@@ -486,14 +496,90 @@ function renderAdmin(){
    <div class="row"><span>Видео в ленте / подарков выдано</span><b>${vids.length} / ${ITEMS.length}</b></div>
    <div class="row"><span>Тележкоинов у всех</span><b>🪙 ${coins}</b></div>
    <h3 style="margin-top:12px">Выдать тележкоины (нажми на человека)</h3>
-   <div id="al">${us.sort((a,c)=>(c.seen||0)-(a.seen||0)).map(u=>`<div class="item" data-u="${esc(u.id)}" style="margin-bottom:6px">${av(u,36)}<div><b>${esc(u.name||'?')}</b><small>@${esc(u.username||'')} · 🪙 ${u.coins||0}${u.seen?' · '+new Date(u.seen).toLocaleDateString('ru'):''}</small></div></div>`).join('')}</div>`;
+   <div id="al">${us.sort((a,c)=>(c.seen||0)-(a.seen||0)).map(u=>`<div class="item" data-u="${esc(u.id)}" style="margin-bottom:6px">${av(u,36)}<div><b>${nameHTML(u)}</b><small>@${esc(u.username||'')} · 🪙 ${u.coins||0}${u.seen?' · '+new Date(u.seen).toLocaleDateString('ru'):''}</small></div></div>`).join('')}</div>`;
   $('#al').onclick=e=>{const it=e.target.closest('.item');if(!it)return;const id=it.dataset.u,u=PR[id];if(!u)return;
-    const v=prompt('Сколько тележкоинов выдать для @'+u.username+'? (отрицательное число забирает)','100');if(v===null)return;
-    const n=parseInt(v,10);if(!n)return toast('Введи число');
+    const v=prompt('@'+u.username+': число = тележкоины (можно со знаком минус); p30 = Премиум на 30 дней (p0 убирает Премиум)','100');if(v===null)return;
+    const m=/^p(\d+)$/i.exec(v.trim());
+    if(m){const d=+m[1];db.doc('profiles/'+id).update({premiumUntil:d?Math.max(u.premiumUntil||0,Date.now())+d*864e5:0}).then(()=>toast(d?'⭐ Премиум +'+d+' дн. → @'+u.username:'Премиум убран')).catch(()=>toast('Ошибка'));return}
+    const n=parseInt(v,10);if(!n)return toast('Введи число или p30');
     db.doc('profiles/'+id).update({coins:(u.coins||0)+n}).then(()=>toast((n>0?'+':'')+n+' 🪙 → @'+u.username)).catch(()=>toast('Ошибка'))};
 }
 const _rp2=renderProf;renderProf=function(){_rp2();renderAdmin();
   if(P&&!seenSent&&db){seenSent=1;save({seen:Date.now(),visits:(P.visits||0)+1})}};
+
+/* ---- новые анимированные подарки ---- */
+const SV={
+frog:`<svg viewBox="0 0 100 100"><ellipse cx="50" cy="64" rx="35" ry="27" fill="#4caf50"/><ellipse cx="50" cy="72" rx="22" ry="16" fill="#8bd48f"/><circle cx="33" cy="36" r="13" fill="#4caf50"/><circle cx="67" cy="36" r="13" fill="#4caf50"/><circle cx="33" cy="35" r="9" fill="#fff"/><circle cx="67" cy="35" r="9" fill="#fff"/><circle class="pu" cx="35" cy="36" r="4.5" fill="#222"/><circle class="pu" cx="65" cy="36" r="4.5" fill="#222"/><path d="M32 63q18 16 36 0" fill="none" stroke="#1b5e20" stroke-width="4" stroke-linecap="round"/><circle cx="26" cy="58" r="5" fill="#ff9aa8" opacity=".7"/><circle cx="74" cy="58" r="5" fill="#ff9aa8" opacity=".7"/></svg>`,
+heart:`<svg viewBox="0 0 100 100"><path d="M50 86C12 58 14 22 37 21c8 0 13 5 13 10 0-5 5-10 13-10 23 1 25 37-13 65z" fill="#ff3b6b"/><ellipse cx="34" cy="34" rx="6" ry="4" fill="#fff" opacity=".5" transform="rotate(-30 34 34)"/></svg>`,
+ghost:`<svg viewBox="0 0 100 100"><path d="M20 82V46a30 30 0 0 1 60 0v36l-10-8-10 8-10-8-10 8-10-8z" fill="#fff"/><circle class="pu" cx="39" cy="46" r="5" fill="#333"/><circle class="pu" cx="61" cy="46" r="5" fill="#333"/><ellipse cx="50" cy="60" rx="5" ry="6" fill="#333"/></svg>`};
+[['frog','Лягушонок','🐸',250,1000,'Эпический'],['ghost','Привидение','👻',150,1500,'Редкий'],['heart','Сердце','❤️',80,3000,'Обычный']].forEach(a=>{GM[a[0]]={id:a[0],n:a[1],e:a[2],svg:SV[a[0]],price:a[3],supply:a[4],rar:a[5]};GL.push(GM[a[0]])});
+
+/* ---- уведомления ---- */
+let swReg=null;const T0=Date.now(),NT={};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').then(r=>swReg=r).catch(()=>{});
+const notifOn=()=>'Notification' in window&&Notification.permission==='granted'&&store.get('notif',true);
+function showN(title,body){try{if(swReg&&swReg.showNotification)swReg.showNotification(title,{body,icon:'icon.png'});else new Notification(title,{body})}catch(e){}}
+function checkNotif(){TH.forEach(t=>{const inc=t.lastUid&&t.lastUid!==uid,fire=()=>{if(inc&&notifOn()&&document.hidden)showN((PR[t.lastUid]||{}).name||'Тележка',t.last||'Новое сообщение')};
+  if(NT[t.id]===undefined){NT[t.id]=t.ts;if(t.ts>T0)fire()}else if(t.ts>NT[t.id]){NT[t.id]=t.ts;fire()}})}
+const _rl2=renderList;renderList=function(){_rl2();checkNotif()};
+function renderNotif(){const b=$('#nbox');if(!b)return;let h='<h3>🔔 Уведомления</h3>';
+  if(!('Notification' in window))h+='<small style="color:var(--muted)">Здесь уведомления недоступны. На iPhone (iOS 16.4+) добавь сайт на экран «Домой» и открой с иконки.</small>';
+  else if(Notification.permission==='denied')h+='<small style="color:var(--muted)">Уведомления запрещены. Разреши их в Настройках iPhone → Уведомления → Тележка.</small>';
+  else if(Notification.permission!=='granted')h+='<div class="row"><span>Сообщения от друзей</span><button class="btn" id="ne">Включить</button></div>';
+  else h+='<div class="row"><span>Сообщения от друзей</span><button class="sw '+(store.get('notif',true)?'on':'')+'" id="nt"></button></div><div class="row"><button class="btn alt" id="nx">Проверить (через 5 сек, сверни приложение)</button></div>';
+  h+='<small style="color:var(--muted);display:block;margin-top:6px">Уведомления приходят, пока приложение открыто или только что свёрнуто. Если закрыть его полностью, они не придут.</small>';
+  b.innerHTML=h;
+  if($('#ne'))$('#ne').onclick=async()=>{try{await Notification.requestPermission()}catch(e){}renderNotif()};
+  if($('#nt'))$('#nt').onclick=()=>{store.set('notif',!store.get('notif',true));renderNotif()};
+  if($('#nx'))$('#nx').onclick=()=>setTimeout(()=>showN('Тележка','Уведомления работают 🎉'),5000)}
+renderNotif();
+
+/* ---- Премиум, группы ---- */
+const PREM=3000,NFX={'Закат':'linear-gradient(90deg,#ff9a3c,#ff3b8d)','Океан':'linear-gradient(90deg,#18b4a6,#2b6cff)','Неон':'linear-gradient(90deg,#b4ff3c,#18e0ff)','Золото':'linear-gradient(90deg,#ffd45c,#ff9d00)'},PCOL=['#ff3b3b','#00c2ff','#a3e635','#f472b6'];
+const isPrem=p=>!!(p&&p.premiumUntil&&p.premiumUntil>Date.now());
+function nameHTML(p){const n=esc((p&&p.name)||'?');if(!isPrem(p))return n;const g=NFX[p.nickFx];return (g?`<span style="background:${g};-webkit-background-clip:text;background-clip:text;color:transparent">${n}</span>`:n)+' ⭐'}
+const bnr=p=>isPrem(p)&&p.bannerImg?`url(${p.bannerImg}) center/cover`:(p.banner||BANNERS[0]);
+async function buyPrem(){
+  if(!P||(P.coins||0)<PREM)return toast('Нужно '+PREM+' 🪙');
+  if(!confirm('Купить Премиум на 30 дней за '+PREM+' тележкоинов?'))return;
+  await save({coins:P.coins-PREM,premiumUntil:Math.max(P.premiumUntil||0,Date.now())+30*864e5});toast('⭐ Премиум активен')}
+function renderPrem(){
+  const b=$('#pbox');if(!b||!P)return;const on=isPrem(P);
+  let h=`<h3>⭐ Тележка Премиум</h3><small style="color:var(--muted);display:block;margin-bottom:8px">Баннер профиля из своего фото · значок ⭐ у ника · золотая рамка аватарки · цветной ник · дополнительные цвета интерфейса</small>`;
+  h+=on?`<div class="row"><span>Активен до <b>${new Date(P.premiumUntil).toLocaleDateString('ru')}</b></span><button class="btn alt" id="pb">Продлить · ${PREM} 🪙</button></div>`:`<div class="row"><span>30 дней</span><button class="btn" id="pb">Купить · ${PREM} 🪙</button></div>`;
+  if(on)h+=`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn alt" id="bi">🖼 Баннер из фото</button>${P.bannerImg?'<button class="btn alt" id="br">Убрать фото</button>':''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><span class="chip ${!P.nickFx?'on':''}" data-fx="">Без эффекта</span>${Object.keys(NFX).map(k=>`<span class="chip ${P.nickFx===k?'on':''}" data-fx="${k}" style="background:${NFX[k]};color:#fff">${k}</span>`).join('')}</div><div class="dots">${PCOL.map(c=>`<div class="dot pdot ${S.accent===c?'on':''}" data-c="${c}" style="background:${c}"></div>`).join('')}</div>`;
+  b.innerHTML=h;$('#pb').onclick=buyPrem;if(!on)return;
+  b.querySelectorAll('[data-fx]').forEach(c=>c.onclick=()=>save({nickFx:c.dataset.fx}));
+  b.querySelectorAll('.pdot').forEach(d=>d.onclick=()=>{S.accent=d.dataset.c;store.set('accent',S.accent);applyTheme();renderPrem()});
+  if($('#br'))$('#br').onclick=()=>save({bannerImg:''});
+  $('#bi').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='image/*';
+    i.onchange=async()=>{const f=i.files[0];if(!f)return;if(f.size>8e6)return toast('До 8 МБ');toast('Загружаю…');
+      try{const a=await claude.use('assets');save({bannerImg:(await a.upload(f)).url})}catch(e){toast('Не удалось загрузить')}};i.click()};
+}
+const _rp3=renderProf;renderProf=function(){_rp3();renderPrem()};
+/* группы: это записи в threads с group:true */
+const _rl3=renderList;renderList=function(){_rl3();
+  const l=$('#list');if(!l)return;const f=l.querySelector('.box');
+  if(f)f.insertAdjacentHTML('afterend','<button class="btn alt" id="mkg" style="width:100%">👥 Создать группу</button>');
+  TH.filter(t=>t.group).forEach(t=>{const el=[...l.querySelectorAll('.item')].find(x=>x.dataset.t===t.id);if(!el)return;
+    el.innerHTML=`<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#7c5cff,#ff6ba0);display:grid;place-items:center;font-size:22px;flex:none">👥</div><div><b>${esc(t.name||'Группа')}</b><small>${t.members.length} участн.${t.last?' · '+esc(t.last):''}</small></div>`+(unread(t)?'<span style="margin-left:auto;width:12px;height:12px;border-radius:50%;background:#ff3b6b"></span>':'')});
+  if($('#mkg'))$('#mkg').onclick=newGroup};
+function newGroup(){
+  modal('Новая группа','<input type="text" id="gn" maxlength="30" placeholder="Название группы"><input type="text" id="gm" placeholder="Участники: @user1 @user2" autocapitalize="none"><button class="btn" id="gc">Создать</button>');
+  $('#gc').onclick=async()=>{const name=$('#gn').value.trim();if(!name)return toast('Введи название');
+    const us=[...new Set($('#gm').value.toLowerCase().split(/[\s,]+/).map(x=>x.replace(/^@/,'')).filter(Boolean))],ids=[uid],bad=[];
+    try{for(const u of us){const s=await db.doc('usernames/'+u).get();if(s.exists){const id=s.data().uid;if(!ids.includes(id))ids.push(id)}else bad.push(u)}
+      if(bad.length)return toast('Не найдены: '+bad.map(x=>'@'+x).join(', '));
+      const r=await db.collection('threads').add({group:true,name,owner:uid,members:ids,ts:Date.now(),last:'',lastUid:''});
+      closeModal();openConv({path:'threads/'+r.id+'/msgs',title:name,tid:r.id})}catch(e){toast('Ошибка')}}}
+const _oc3=openConv;openConv=function(c){const t=c.tid&&TH.find(x=>x.id===c.tid);if(t&&t.group)c={...c,title:t.name,other:null,group:1,gen:1};_oc3(c);$('#gf').style.display=(c.tid&&!c.group)?'':'none'};
+$('#ct').onclick=()=>{if(cur.group)groupInfo();else if(cur.other)viewProfile(cur.other)};
+function groupInfo(){const t=TH.find(x=>x.id===cur.tid);if(!t)return;
+  modal(t.name,`<b>Участники (${t.members.length})</b>${t.members.map(m=>`<div class="item" data-p="${esc(m)}">${av(PR[m],36)}<div><b>${nameHTML(PR[m]||{name:'…'})}</b><small>@${esc((PR[m]||{}).username||'')}</small></div></div>`).join('')}<input type="text" id="ga" placeholder="Добавить: @username" autocapitalize="none"><button class="btn" id="gad">Добавить</button><button class="btn alt" id="glv">Выйти из группы</button>`);
+  $('#mb').onclick=e=>{const it=e.target.closest('[data-p]');if(it){closeModal();viewProfile(it.dataset.p)}};
+  $('#gad').onclick=async()=>{const u=$('#ga').value.trim().toLowerCase().replace(/^@/,'');if(!u)return;
+    try{const s=await db.doc('usernames/'+u).get();if(!s.exists)return toast('Не найден');await db.doc('threads/'+t.id).update({members:firebase.firestore.FieldValue.arrayUnion(s.data().uid)});closeModal();toast('Добавлен')}catch(e){toast('Ошибка')}};
+  $('#glv').onclick=async()=>{if(!confirm('Выйти из группы?'))return;try{await db.doc('threads/'+t.id).update({members:firebase.firestore.FieldValue.arrayRemove(uid)});closeModal();$('#bk').click()}catch(e){toast('Ошибка')}}}
 
 /* ---- boot ---- */
 async function boot(){

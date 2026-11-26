@@ -108,6 +108,17 @@ nav button svg{display:block}
 .rx{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.rc{font-size:12px;padding:2px 8px;border-radius:12px;background:rgba(127,127,127,.25);cursor:pointer}.rc.on{outline:2px solid var(--accent)}
 .rq{border-left:3px solid currentColor;padding-left:8px;margin-bottom:5px;font-size:12px;opacity:.85;cursor:pointer;overflow:hidden;text-overflow:ellipsis}.rq b{display:block}
 @keyframes fl{0%,100%{filter:none}30%{filter:brightness(1.5)}}.m.flash{animation:fl 1.1s}
+.pg{display:inline-block;width:20px;height:20px;vertical-align:-5px}.pg svg{width:20px;height:20px}
+.tt{font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;background:linear-gradient(90deg,#7c5cff,#ff6ba0);color:#fff;vertical-align:2px;-webkit-text-fill-color:#fff}
+.ge.a-bear,.ge.a-rose,.ge.a-cake,.ge.a-crown,.ge.a-gem,.ge.a-rocket{animation:none}
+.a-bear svg,.a-rose svg,.a-cake svg,.a-crown svg,.a-frogh svg,.a-icecream svg,.a-donut svg,.a-letter svg,.a-giftbox svg,.a-coffee svg,.a-horseshoe svg,.a-watch svg,.a-ringbox svg{animation:bob 2.2s ease-in-out infinite}
+.a-gem svg{animation:pulse 1.6s ease-in-out infinite}.a-rocket svg{animation:fly 1.2s ease-in-out infinite}
+.hb{transform-box:fill-box;transform-origin:center;animation:pulse 1s ease-in-out infinite}
+.sec{transform-origin:50px 50px;animation:spin 6s steps(60) infinite}
+.ex{transform-box:fill-box;transform-origin:50% 0;animation:flame .25s ease-in-out infinite alternate}
+.fl2{transform-box:fill-box;transform-origin:50% 100%;animation:flame2 .5s ease-in-out infinite alternate}
+.a-frogh .pu,.a-bear .pu{transform-box:fill-box;transform-origin:center;animation:blink 3.2s infinite}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes flame{from{transform:scaleY(1)}to{transform:scaleY(1.3)}}@keyframes flame2{from{transform:scale(1,1)}to{transform:scale(.85,1.15)}}
 </style>
 <meta name="apple-mobile-web-app-title" content="Тележка">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -263,7 +274,7 @@ function renderMsgs(snap){
   const box=$('#msgs'),atEnd=box.scrollHeight-box.scrollTop-box.clientHeight<80;
   box.innerHTML=snap.docs.map(d=>{const m=d.data(),me=m.uid===uid;
     const t=m.ts?new Date(m.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}):'';
-    return `<div class="m ${me?'me':''}">${me?'':`<span class="n">${esc(m.name||'?')}</span>`}${esc(m.text)}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Напиши первое сообщение 👋</div>';
+    return `<div class="m ${me?'me':''}">${me?'':`<span class="n">${nameHTML(PR[m.uid]||{name:m.name})}</span>`}${esc(m.text)}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Напиши первое сообщение 👋</div>';
   if(atEnd)box.scrollTop=box.scrollHeight;
 }
 $('#f').onsubmit=async e=>{e.preventDefault();
@@ -324,7 +335,7 @@ const save=p=>db.doc('profiles/'+uid).update(p).catch(()=>toast('Ошибка с
 function reward(id){const v=vids.find(x=>x.id===id);if(v&&v.uid!==uid)db.doc('profiles/'+v.uid).update({coins:((PR[v.uid]||{}).coins||0)+1}).catch(()=>{})}
 function av(p,s){p=p||{};return p.avatar?`<img src="${esc(p.avatar)}" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;border:3px solid ${isPrem(p)?'#ffc83d':'var(--card)'}">`:`<div style="width:${s}px;height:${s}px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;border:3px solid ${isPrem(p)?'#ffc83d':'var(--card)'}">${esc((p.name||'?')[0]).toUpperCase()}</div>`}
 function askName(){
-  modal('Профиль · v10','<input type="text" id="nn" maxlength="20" placeholder="Имя"><input type="text" id="un" maxlength="20" placeholder="юзернейм (a-z, 0-9, _)"><button class="btn" id="ok">Готово</button>');
+  modal('Профиль · v11','<input type="text" id="nn" maxlength="20" placeholder="Имя"><input type="text" id="un" maxlength="20" placeholder="юзернейм (a-z, 0-9, _)"><button class="btn" id="ok">Готово</button>');
   $('#nn').value=S.name||'';$('#un').value=P?P.username:(window.LOGIN_NAME||'');
   $('#ok').onclick=async()=>{
     const n=$('#nn').value.trim(),u=$('#un').value.trim().toLowerCase().replace(/^@/,'');
@@ -384,7 +395,7 @@ function renderMsgs(snap){
   box.innerHTML=snap.docs.map(d=>{const m=d.data(),me=m.uid===uid;
     const t=m.ts?new Date(m.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}):'';
     if(m.gift)return `<div class="m gift ${me?'me':''}">${m.gift}<span class="t" style="font-size:12px;color:var(--muted)">${me?'Вы подарили':esc(m.name||'?')+' дарит'} · ${m.price} ${CUR}</span></div>`;
-    return `<div class="m ${me?'me':''}">${me||!cur.gen?'':`<span class="n">${esc(m.name||'?')}</span>`}${esc(m.text)}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
+    return `<div class="m ${me?'me':''}">${me||!cur.gen?'':`<span class="n">${nameHTML(PR[m.uid]||{name:m.name})}</span>`}${esc(m.text)}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
   if(end)box.scrollTop=box.scrollHeight}
 $('#f').onsubmit=async e=>{e.preventDefault();const t=$('#inp').value.trim();if(!t||!db)return;$('#inp').value='';
   try{await db.collection(cur.path).add({text:t,name:S.name,uid,ts:Date.now()});
@@ -404,7 +415,7 @@ $('#gf').onclick=()=>{
 const GM={};[['bear','Мишка','🧸',30,5000,'Обычный'],['rose','Роза','🌹',60,3000,'Обычный'],['cake','Торт','🎂',120,2000,'Редкий'],['gem','Алмаз','💎',300,1000,'Эпический'],['rocket','Ракета','🚀',700,500,'Эпический'],['crown','Корона','👑',1500,100,'Легендарный']].forEach(a=>GM[a[0]]={id:a[0],n:a[1],e:a[2],price:a[3],supply:a[4],rar:a[5]});
 const GL=Object.values(GM),PT=['✦','❄','♥','☆','✿','●'],BD=[['#ff9a9e','#fad0c4'],['#a18cd1','#fbc2eb'],['#84fab0','#8fd3f4'],['#f6d365','#fda085'],['#667eea','#764ba2'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],['#30cfd0','#330867']];
 let ITEMS=[],paying=0;
-function card(it){const g=GM[it.type];return `<div class="gc ${it.shown?'sh':''} ${g.rar==='Легендарный'?'leg':''}" data-i="${it.id||''}" style="background:linear-gradient(160deg,${BD[it.bd][0]},${BD[it.bd][1]})"><div class="pt">${(PT[it.pt]+' ').repeat(30)}</div><i class="r">${g.rar}</i><div class="ge a-${g.id}">${g.svg||g.e}</div><b>${g.n}</b><small>${it.serial==='?'?'тираж '+g.supply:'#'+it.serial+' из '+g.supply}</small></div>`}
+function card(it){const g=GM[it.type];return `<div class="gc ${it.shown?'sh':''} ${g.rar==='Легендарный'?'leg':''}" data-i="${it.id||''}" style="background:linear-gradient(160deg,${BD[it.bd][0]},${BD[it.bd][1]})"><div class="pt">${(PT[it.pt]+' ').repeat(30)}</div><i class="r">${g.rar}</i><div class="ge a-${g.id}">${uq(g.svg||g.e)}</div><b>${g.n}</b><small>${it.serial==='?'?'тираж '+g.supply:'#'+it.serial+' из '+g.supply}</small></div>`}
 function postReward(){if(P&&P.postDay!==new Date().toDateString()){save({coins:(P.coins||0)+5,postDay:new Date().toDateString()});toast('+5 🪙 за первое видео дня')}}
 function checkLikes(){if(!P||paying)return;
   const tot=vids.filter(v=>v.uid===uid).reduce((a,v)=>a+(likes[v.id]||[]).filter(x=>x!==uid).length,0),b=Math.floor(tot/10)-(P.blocks||0);
@@ -449,7 +460,7 @@ function renderMsgs(snap){
     const t=m.ts?new Date(m.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}):'';
     if(m.gift&&GM[m.gift])return `<div style="width:130px;align-self:${me?'flex-end':'flex-start'}" onclick="viewProfile('${esc(m.uid)}')">${card(m)}<small style="color:var(--muted)">${me?'Вы подарили':esc(m.name||'?')+' дарит'}</small></div>`;
     if(m.gift)return `<div class="m gift ${me?'me':''}">${esc(m.gift)}</div>`;
-    return `<div class="m ${me?'me':''}">${me||!cur.gen?'':`<span class="n">${esc(m.name||'?')}</span>`}${esc(m.text)}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
+    return `<div class="m ${me?'me':''}">${me||!cur.gen?'':`<span class="n">${nameHTML(PR[m.uid]||{name:m.name})}</span>`}${esc(m.text)}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
   if(end)box.scrollTop=box.scrollHeight}
 
 /* ---- улучшения чата ---- */
@@ -478,7 +489,7 @@ function renderMsgs(snap){
     const t=m.ts?new Date(m.ts).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}):'';
     if(m.gift&&GM[m.gift])return `<div style="width:130px;align-self:${me?'flex-end':'flex-start'}" onclick="viewProfile('${esc(m.uid)}')">${card(m)}<small style="color:var(--muted)">${me?'Вы подарили':esc(m.name||'?')+' дарит'}</small></div>`;
     if(m.gift)return `<div class="m gift ${me?'me':''}">${esc(m.gift)}</div>`;
-    return `<div class="m ${me?'me':''}" data-id="${d.id}">${me||!cur.gen?'':`<span class="n">${esc(m.name||'?')}</span>`}${m.img?`<img src="${esc(m.img)}" style="max-width:100%;border-radius:12px;display:block;margin-bottom:4px">`:''}${esc(m.text||'')}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
+    return `<div class="m ${me?'me':''}" data-id="${d.id}">${me||!cur.gen?'':`<span class="n">${nameHTML(PR[m.uid]||{name:m.name})}</span>`}${m.img?`<img src="${esc(m.img)}" style="max-width:100%;border-radius:12px;display:block;margin-bottom:4px">`:''}${esc(m.text||'')}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
   if(end)box.scrollTop=box.scrollHeight}
 $('#msgs').onclick=e=>{const m=e.target.closest('.m.me');if(m&&m.dataset.id&&confirm('Удалить сообщение?'))db.doc(cur.path+'/'+m.dataset.id).delete().catch(()=>toast('Ошибка'))};
 
@@ -512,7 +523,9 @@ function renderAdmin(){
    <h3 style="margin-top:12px">Выдать тележкоины (нажми на человека)</h3>
    <div id="al">${us.sort((a,c)=>(c.seen||0)-(a.seen||0)).map(u=>`<div class="item" data-u="${esc(u.id)}" style="margin-bottom:6px">${av(u,36)}<div><b>${nameHTML(u)}</b><small>@${esc(u.username||'')} · 🪙 ${u.coins||0}${u.seen?' · '+new Date(u.seen).toLocaleDateString('ru'):''}</small></div></div>`).join('')}</div>`;
   $('#al').onclick=e=>{const it=e.target.closest('.item');if(!it)return;const id=it.dataset.u,u=PR[id];if(!u)return;
-    const v=prompt('@'+u.username+': число = тележкоины (можно со знаком минус); p30 = Премиум на 30 дней (p0 убирает Премиум)','100');if(v===null)return;
+    const v=prompt('@'+u.username+': число = тележкоины (можно со знаком минус); p30 = Премиум на 30 дней (p0 убирает); t:Название = выдать особый титул','100');if(v===null)return;
+    const tm=/^t:(.*)$/i.exec(v.trim());
+    if(tm){db.doc('profiles/'+id).update({ctitle:tm[1].trim().slice(0,20)}).then(()=>toast('Титул выдан @'+u.username)).catch(()=>toast('Ошибка'));return}
     const m=/^p(\d+)$/i.exec(v.trim());
     if(m){const d=+m[1];db.doc('profiles/'+id).update({premiumUntil:d?Math.max(u.premiumUntil||0,Date.now())+d*864e5:0}).then(()=>toast(d?'⭐ Премиум +'+d+' дн. → @'+u.username:'Премиум убран')).catch(()=>toast('Ошибка'));return}
     const n=parseInt(v,10);if(!n)return toast('Введи число или p30');
@@ -559,7 +572,7 @@ async function buyPrem(){
   await save({coins:P.coins-PREM,premiumUntil:Math.max(P.premiumUntil||0,Date.now())+30*864e5});toast('⭐ Премиум активен')}
 function renderPrem(){
   const b=$('#pbox');if(!b||!P)return;const on=isPrem(P);
-  let h=`<h3>⭐ Тележка Премиум</h3><small style="color:var(--muted);display:block;margin-bottom:8px">Баннер профиля из своего фото · значок ⭐ у ника · золотая рамка аватарки · цветной ник · дополнительные цвета интерфейса</small>`;
+  let h=`<h3>⭐ Тележка Премиум</h3><div style="font-size:13px;line-height:1.7;margin-bottom:8px">✅ Баннер профиля из своего фото<br>✅ Значок ⭐ рядом с ником<br>✅ Золотая рамка аватарки<br>✅ Цветной ник (Закат, Океан, Неон, Золото)<br>✅ 4 дополнительных цвета интерфейса<br>✅ Один подарок рядом с ником<br>✅ Титулы рядом с ником (другие видят их, только пока у вас Премиум)<br>✅ Рулетка раз в 2 дня вместо 3</div>`;
   h+=on?`<div class="row"><span>Активен до <b>${new Date(P.premiumUntil).toLocaleDateString('ru')}</b></span><button class="btn alt" id="pb">Продлить · ${PREM} 🪙</button></div>`:`<div class="row"><span>30 дней</span><button class="btn" id="pb">Купить · ${PREM} 🪙</button></div>`;
   if(on)h+=`<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn alt" id="bi">🖼 Баннер из фото</button>${P.bannerImg?'<button class="btn alt" id="br">Убрать фото</button>':''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><span class="chip ${!P.nickFx?'on':''}" data-fx="">Без эффекта</span>${Object.keys(NFX).map(k=>`<span class="chip ${P.nickFx===k?'on':''}" data-fx="${k}" style="background:${NFX[k]};color:#fff">${k}</span>`).join('')}</div><div class="dots">${PCOL.map(c=>`<div class="dot pdot ${S.accent===c?'on':''}" data-c="${c}" style="background:${c}"></div>`).join('')}</div>`;
   b.innerHTML=h;$('#pb').onclick=buyPrem;if(!on)return;
@@ -605,7 +618,7 @@ function updHdr(){if(!$('#ch').classList.contains('on'))return;let sub='';
   if(cur.group){const t=TH.find(x=>x.id===cur.tid);if(t)sub=t.members.length+' участн., '+t.members.filter(m=>m===uid||online(PR[m])).length+' в сети'}
   else if(cur.other)sub=ago(PR[cur.other]);
   else if(cur.gen)sub=Object.values(PR).filter(online).length+' в сети';
-  $('#ct').innerHTML=esc(cur.title||'')+(sub?'<small style="display:block;font-weight:400;font-size:12px;color:var(--muted)">'+sub+'</small>':'')}
+  $('#ct').innerHTML=(cur.other&&PR[cur.other]?nameHTML(PR[cur.other]):esc(cur.title||''))+(sub?'<small style="display:block;font-weight:400;font-size:12px;color:var(--muted)">'+sub+'</small>':'')}
 setInterval(()=>{updHdr();if(TH)renderList()},6e4);
 const _rl4=renderList;renderList=function(){_rl4();const l=$('#list');if(!l)return;
   TH.forEach(t=>{if(t.group)return;const el=[...l.querySelectorAll('.item')].find(x=>x.dataset.t===t.id),o=t.members.find(m=>m!==uid);
@@ -633,7 +646,7 @@ function groupInfo(){const t=TH.find(x=>x.id===cur.tid);if(!t)return;const own=t
 /* апгрейд и продажа подарков */
 const BDX=[['#f7971e','#ffd200'],['#8e2de2','#4a00e0'],['#00c6ff','#0072ff'],['#f953c6','#b91d73']];
 function card(it){const g=GM[it.type],lv=it.lvl||0,bg=lv>=2?BDX[it.bd%4]:BD[it.bd];
-  return `<div class="gc ${it.shown?'sh':''} ${g.rar==='Легендарный'||lv>=3?'leg':''}" data-i="${it.id||''}" style="background:linear-gradient(160deg,${bg[0]},${bg[1]})"><div class="pt">${(PT[it.pt]+' ').repeat(30)}</div><i class="r">${g.rar}${lv?' · '+'★'.repeat(lv):''}</i><div class="ge a-${g.id}">${g.svg||g.e}</div><b>${g.n}</b><small>${it.serial==='?'?'тираж '+g.supply:'#'+it.serial+' из '+g.supply}</small></div>`}
+  return `<div class="gc ${it.shown?'sh':''} ${g.rar==='Легендарный'||lv>=3?'leg':''}" data-i="${it.id||''}" style="background:linear-gradient(160deg,${bg[0]},${bg[1]})"><div class="pt">${(PT[it.pt]+' ').repeat(30)}</div><i class="r">${g.rar}${lv?' · '+'★'.repeat(lv):''}</i><div class="ge a-${g.id}">${uq(g.svg||g.e)}</div><b>${g.n}</b><small>${it.serial==='?'?'тираж '+g.supply:'#'+it.serial+' из '+g.supply}</small></div>`}
 function itemMenu(e){const c=e.target.closest('.gc');if(!c)return;const it=ITEMS.find(x=>x.id===c.dataset.i);if(!it)return;
   const g=GM[it.type],lv=it.lvl||0,cost=Math.max(20,Math.floor(g.price*.5))*(lv+1),sell=Math.floor(g.price*.6*(1+.5*lv));
   modal(g.n,`<div style="width:150px;margin:auto">${card(it)}</div><button class="btn alt" id="i1">${it.shown?'Убрать из профиля':'📌 Выставить в профиль'}</button>${lv>=3?'<small style="text-align:center;color:var(--muted)">Максимальный уровень ★★★</small>':isPrem(P)?`<button class="btn" id="i2">⬆️ Улучшить до ★${lv+1} · ${cost} 🪙</button>`:'<small style="text-align:center;color:var(--muted)">⭐ Улучшение подарков доступно с Премиумом</small>'}<button class="btn alt" id="i3">💰 Продать · ${sell} 🪙</button>`);
@@ -728,7 +741,7 @@ const upChance=(it,tg)=>Math.min(.9,Math.max(.03,GM[it.type].price/tg.price*.95)
 function ugSVG(ch){const C=2*Math.PI*85;
   return `<svg viewBox="-100 -100 200 200" style="width:260px;height:260px;display:block;margin:auto"><circle r="85" fill="none" stroke="#ff4d6d" stroke-width="16"/><circle id="ugw" r="85" fill="none" stroke="#2ee59d" stroke-width="16" stroke-dasharray="${ch*C} ${C}" transform="rotate(${UG.start-90})"/><g id="nd"><line x1="0" y1="-60" x2="0" y2="-98" stroke="#fff" stroke-width="6" stroke-linecap="round"/><line x1="0" y1="-60" x2="0" y2="-98" stroke="#222" stroke-width="2" stroke-linecap="round"/></g></svg>`}
 function renderUpg(){const b=$('#ubox');if(!b||!P||UG.busy)return;
-  if(!isPrem(P)){b.innerHTML='<h3>⬆️ Апгрейд подарков</h3><div class="empty" style="padding:16px"><div class="big">🔒</div>Доступно с ⭐ Тележка Премиум.<br><small>Купить Премиум можно в Настройках.</small></div>';return}
+  
   const sl=[...b.querySelectorAll('.hs')].map(x=>x.scrollLeft),mine=ITEMS.filter(i=>i.owner===uid).sort((a,c)=>GM[a.type].price-GM[c.type].price);
   if(UG.src&&!mine.find(i=>i.id===UG.src))UG.src=null;
   const it=mine.find(i=>i.id===UG.src),tl=it?GL.filter(g=>g.price>GM[it.type].price):[];
@@ -736,7 +749,7 @@ function renderUpg(){const b=$('#ubox');if(!b||!P||UG.busy)return;
   const tg=UG.tgt?GM[UG.tgt]:null,ch=it&&tg?upChance(it,tg):0;
   b.innerHTML=`<h3>⬆️ Апгрейд подарков</h3><small style="color:var(--muted);display:block;margin-bottom:8px">Поставь подарок и выбери, на какой хочешь его улучшить. Чем дороже цель, тем меньше шанс. При проигрыше подарок сгорает.</small><b>1. Твой подарок</b><div class="hs">${mine.map(i=>`<div class="mini ${i.id===UG.src?'sel':''}" data-s="${i.id}">${card(i)}</div>`).join('')||'<small>Подарков нет: купи в магазине или выиграй в рулетке</small>'}</div>`
   +(it?`<b>2. Хочу получить</b><div class="hs">${tl.map((g,k)=>`<div class="mini ${g.id===UG.tgt?'sel':''}" data-t="${g.id}">${card({type:g.id,serial:'?',bd:(k*3)%8,pt:k%6})}<small style="display:block;text-align:center">${g.price} 🪙</small></div>`).join('')||'<small>Это самый дорогой подарок</small>'}</div>`:'')
-  +(tg?`<div style="position:relative;width:260px;margin:12px auto">${ugSVG(ch)}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div class="ge a-${tg.id}" style="font-size:44px">${tg.svg||tg.e}</div><b style="font-size:20px">${Math.round(ch*100)}%</b></div></div><div class="row"><span>Зона выигрыша 🟩</span><small style="color:var(--muted)">двигай ползунок</small></div><input type="range" id="ugs" min="0" max="359" value="${UG.start}" style="width:100%"><button class="btn" id="ugb" style="width:100%;margin-top:10px">Апгрейд</button>`:'');
+  +(tg?`<div style="position:relative;width:260px;margin:12px auto">${ugSVG(ch)}<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><div class="ge a-${tg.id}" style="font-size:44px">${uq(tg.svg||tg.e)}</div><b style="font-size:20px">${Math.round(ch*100)}%</b></div></div><div class="row"><span>Зона выигрыша 🟩</span><small style="color:var(--muted)">двигай ползунок</small></div><input type="range" id="ugs" min="0" max="359" value="${UG.start}" style="width:100%"><button class="btn" id="ugb" style="width:100%;margin-top:10px">Апгрейд</button>`:'');
   b.querySelectorAll('.hs').forEach((x,i)=>x.scrollLeft=sl[i]||0);
   b.querySelectorAll('[data-s]').forEach(x=>x.onclick=()=>{UG.src=x.dataset.s;renderUpg()});
   b.querySelectorAll('[data-t]').forEach(x=>x.onclick=()=>{UG.tgt=x.dataset.t;renderUpg()});
@@ -776,7 +789,7 @@ function renderMsgs(snap){
     if(m.gift&&GM[m.gift])return `<div style="width:130px;align-self:${me?'flex-end':'flex-start'}" onclick="viewProfile('${esc(m.uid)}')">${card(m)}<small style="color:var(--muted)">${me?'Вы подарили':esc(m.name||'?')+' дарит'}</small></div>`;
     if(m.gift)return `<div class="m gift ${me?'me':''}">${esc(m.gift)}</div>`;
     const rx=RX.map((x,i)=>{const a=(m.rx&&m.rx['r'+i])||[];return a.length?`<span class="rc ${a.includes(uid)?'on':''}" data-r="${i}">${x} ${a.length}</span>`:''}).join('');
-    return `<div class="m ${me?'me':''}" data-id="${d.id}">${me||!cur.gen?'':`<span class="n">${esc(m.name||'?')}</span>`}${m.re?`<div class="rq" data-go="${esc(m.re.id)}"><b>${esc(m.re.n)}</b>${esc(m.re.t)}</div>`:''}${m.img?`<img src="${esc(m.img)}" style="max-width:100%;border-radius:12px;display:block;margin-bottom:4px">`:''}${esc(m.text||'')}${rx?`<div class="rx">${rx}</div>`:''}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
+    return `<div class="m ${me?'me':''}" data-id="${d.id}">${me||!cur.gen?'':`<span class="n">${nameHTML(PR[m.uid]||{name:m.name})}</span>`}${m.re?`<div class="rq" data-go="${esc(m.re.id)}"><b>${esc(m.re.n)}</b>${esc(m.re.t)}</div>`:''}${m.img?`<img src="${esc(m.img)}" style="max-width:100%;border-radius:12px;display:block;margin-bottom:4px">`:''}${esc(m.text||'')}${rx?`<div class="rx">${rx}</div>`:''}<span class="t">${t}</span></div>`}).join('')||'<div class="empty">Пока пусто 👋</div>';
   if(end)box.scrollTop=box.scrollHeight}
 function msgMenu(id){const m=MSG[id];if(!m)return;const mine=m.uid===uid,can=mine||isAdmin();
   modal('Сообщение',`<div class="gg" style="grid-template-columns:repeat(6,1fr);gap:4px">${RX.map((x,i)=>`<button data-r="${i}" style="font-size:26px;padding:6px">${x}</button>`).join('')}</div><button class="btn alt" id="mr">↩️ Ответить</button>${m.text?'<button class="btn alt" id="mc">📋 Копировать текст</button>':''}${can?`<button class="btn alt" id="md" style="color:#d33">🗑 ${mine?'Удалить у всех':'Удалить (админ)'}</button>`:''}`);
@@ -790,6 +803,48 @@ $('#msgs').onclick=e=>{
   if(q){const el=[...document.querySelectorAll('#msgs .m')].find(x=>x.dataset.id===q.dataset.go);
     if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1200)}else toast('Исходное сообщение удалено');return}
   const m=e.target.closest('.m');if(m&&m.dataset.id&&!m.classList.contains('gift'))msgMenu(m.dataset.id)};
+
+/* ---- реалистичные подарки, титулы, подарок рядом с ником ---- */
+let UQ=0;const uq=s=>{if(typeof s!=='string'||!s.includes('id="'))return s;const k='_'+(++UQ);return s.replace(/id="(\w+)"/g,'id="$1'+k+'"').replace(/url\(#(\w+)\)/g,'url(#$1'+k+')')};
+const lg=(id,a,b)=>`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
+Object.assign(SV,{
+frogh:`<svg viewBox="0 0 100 100"><defs>${lg('fh1','#9be15d','#3fa32a')}${lg('fh2','#ff7aa8','#e0245e')}</defs><g stroke="#1d4a14" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><ellipse cx="30" cy="87" rx="13" ry="7" fill="url(#fh1)"/><ellipse cx="72" cy="87" rx="13" ry="7" fill="url(#fh1)"/><path d="M26 76c-4-26 6-46 24-46s28 20 24 46c-3 12-12 14-24 14S29 88 26 76z" fill="url(#fh1)"/><circle cx="38" cy="36" r="11" fill="#fff"/><circle cx="62" cy="36" r="11" fill="#fff"/><circle class="pu" cx="40" cy="37" r="5.5" fill="#12323a"/><circle class="pu" cx="60" cy="37" r="5.5" fill="#12323a"/><path d="M36 54q14 9 28 0" fill="none" stroke="#c0182f" stroke-width="3.5"/><path class="hb" d="M50 90C26 74 28 52 41 52c5 0 9 3 9 8 0-5 4-8 9-8 13 0 15 22-9 38z" fill="url(#fh2)" stroke="#8c0f36"/></g><path d="M27 66c8 10 18 10 23 4M73 66c-8 10-18 10-23 4" fill="none" stroke="#1d4a14" stroke-width="10" stroke-linecap="round"/><path d="M27 66c8 10 18 10 23 4M73 66c-8 10-18 10-23 4" fill="none" stroke="#5cc23a" stroke-width="6" stroke-linecap="round"/><ellipse cx="36" cy="31" rx="4" ry="2.4" fill="#fff" opacity=".7"/></svg>`,
+plush:`<svg viewBox="0 0 100 100"><defs>${lg('pb1','#c98b5a','#8a5632')}</defs><g stroke="#4a2c14" stroke-width="2.5" stroke-linejoin="round"><circle cx="24" cy="26" r="11" fill="url(#pb1)"/><circle cx="76" cy="26" r="11" fill="url(#pb1)"/><circle cx="24" cy="26" r="5.5" fill="#e8b88a"/><circle cx="76" cy="26" r="5.5" fill="#e8b88a"/><ellipse cx="50" cy="74" rx="26" ry="22" fill="url(#pb1)"/><ellipse cx="26" cy="68" rx="9" ry="14" transform="rotate(25 26 68)" fill="url(#pb1)"/><ellipse cx="74" cy="68" rx="9" ry="14" transform="rotate(-25 74 68)" fill="url(#pb1)"/><ellipse cx="34" cy="92" rx="11" ry="7" fill="url(#pb1)"/><ellipse cx="66" cy="92" rx="11" ry="7" fill="url(#pb1)"/><circle cx="50" cy="42" r="26" fill="url(#pb1)"/><ellipse cx="50" cy="52" rx="13" ry="10" fill="#f3d9bd"/><ellipse cx="50" cy="48" rx="5" ry="3.5" fill="#3a2418"/><path d="M50 52v4q-5 4-9 0M50 56q5 4 9 0" fill="none" stroke="#3a2418" stroke-width="2"/></g><circle class="pu" cx="40" cy="38" r="3.5" fill="#222"/><circle class="pu" cx="60" cy="38" r="3.5" fill="#222"/><path class="hb" d="M50 72c-10-6-8-14-2-14 2 0 2 2 2 3 0-1 0-3 2-3 6 0 8 8-2 14z" fill="#ff6b8b"/><path d="M34 70q4-6 12-6" stroke="#fff" stroke-width="2" fill="none" stroke-dasharray="3 3" opacity=".6"/></svg>`,
+ringbox:`<svg viewBox="0 0 100 100"><defs>${lg('rb1','#4a4560','#1f1c2e')}${lg('rb2','#2d2a40','#14121f')}</defs><g stroke="#0e0c18" stroke-width="2.5" stroke-linejoin="round"><path d="M18 46l8-26h48l8 26z" fill="url(#rb2)"/></g><ellipse cx="50" cy="50" rx="30" ry="5" fill="#0b0912"/><circle cx="50" cy="42" r="16" fill="none" stroke="#f1cf63" stroke-width="5"/><path d="M42 22l8-10 8 10-8 12z" fill="#9fe8ff" stroke="#3b8fb0" stroke-width="2" stroke-linejoin="round"/><path d="M42 22h16M50 12v22" stroke="#fff" stroke-width="1.5" opacity=".8"/><g stroke="#0e0c18" stroke-width="2.5" stroke-linejoin="round"><rect x="14" y="50" width="72" height="38" rx="8" fill="url(#rb1)"/></g><path d="M20 62h60" stroke="#7b75a0" stroke-width="2" opacity=".6"/><circle cx="50" cy="74" r="3.5" fill="#c9d2d9"/><path class="sp" d="M72 14l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/></svg>`,
+watch:`<svg viewBox="0 0 100 100"><defs>${lg('wt1','#e8eef2','#8e9aa3')}${lg('wt2','#2f5fbf','#14306b')}</defs><g stroke="#3d4650" stroke-width="2.5" stroke-linejoin="round"><path d="M34 4h32l4 26H30z" fill="url(#wt1)"/><path d="M30 70h40l-4 26H34z" fill="url(#wt1)"/><circle cx="50" cy="50" r="28" fill="url(#wt1)"/><circle cx="50" cy="50" r="21" fill="url(#wt2)"/><rect x="77" y="46" width="7" height="8" rx="2" fill="#c9d2d9"/></g><path d="M50 33v4M50 63v4M33 50h4M63 50h4" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M50 50V38M50 50l10 4" stroke="#fff" stroke-width="3" stroke-linecap="round"/><g class="sec"><path d="M50 50V31" stroke="#ff5a4d" stroke-width="1.6" stroke-linecap="round"/></g><circle cx="50" cy="50" r="2.5" fill="#ff5a4d"/><path d="M36 40q6-8 16-9" stroke="#fff" stroke-width="2.5" fill="none" opacity=".5" stroke-linecap="round"/></svg>`,
+diamond:`<svg viewBox="0 0 100 100"><defs>${lg('dm1','#b6f0ff','#3aa7d6')}</defs><path d="M22 38l12-18h32l12 18-28 46z" fill="url(#dm1)" stroke="#1f6f94" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 38h56M34 20l10 18 6 46M66 20L56 38l-6 46M44 38l6-18 6 18" fill="none" stroke="#fff" stroke-width="1.8" opacity=".8"/><path d="M34 20l10 18-22 0z" fill="#fff" opacity=".35"/><path class="sp" d="M78 14l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#fff"/></svg>`,
+icecream:`<svg viewBox="0 0 100 100"><defs>${lg('ic1','#ff9ec3','#f0679c')}${lg('ic2','#fff2c9','#f2cf7a')}${lg('ic3','#e9b36a','#b97a35')}</defs><g stroke="#5a2f19" stroke-width="2.5" stroke-linejoin="round"><path d="M30 52h40L50 94z" fill="url(#ic3)"/><circle cx="50" cy="42" r="22" fill="url(#ic2)"/><path d="M26 40c0-14 10-22 24-22s24 8 24 22c-6 4-12-2-16 2s-10 4-16 0-10 4-16-2z" fill="url(#ic1)"/><circle cx="50" cy="16" r="6" fill="#e0243a"/></g><path d="M38 60l24 8M42 72l18 6" stroke="#8a5424" stroke-width="1.5" opacity=".7"/><ellipse cx="38" cy="30" rx="6" ry="3" fill="#fff" opacity=".5"/></svg>`,
+donut:`<svg viewBox="0 0 100 100"><defs>${lg('dn1','#e8b36b','#c07f3a')}${lg('dn2','#ff8fc0','#ee5fa0')}</defs><g stroke="#5a2f19" stroke-width="2.5"><circle cx="50" cy="52" r="38" fill="url(#dn1)"/><path d="M14 52c0-22 16-36 36-36s36 14 36 36c-6 6-10 0-16 6s-10 4-20 4-14 2-20-4-10 0-16-6z" fill="url(#dn2)"/><circle cx="50" cy="52" r="11" fill="#dfe6ff"/></g><g stroke-width="3" stroke-linecap="round"><path d="M28 34l5-3" stroke="#fff"/><path d="M60 26l5 3" stroke="#ffe14d"/><path d="M72 44l4-4" stroke="#6ae0ff"/><path d="M30 60l5 2" stroke="#fff"/><path d="M62 66l5-2" stroke="#ffe14d"/></g></svg>`,
+horseshoe:`<svg viewBox="0 0 100 100"><defs>${lg('hs1','#fff1a8','#d99a1c')}</defs><path d="M26 86V50a24 24 0 0 1 48 0v36H60V52a10 10 0 0 0-20 0v34z" fill="url(#hs1)" stroke="#8a5a0b" stroke-width="3" stroke-linejoin="round"/><g fill="#8a5a0b"><circle cx="33" cy="60" r="2.5"/><circle cx="33" cy="74" r="2.5"/><circle cx="67" cy="60" r="2.5"/><circle cx="67" cy="74" r="2.5"/><circle cx="39" cy="40" r="2.5"/><circle cx="61" cy="40" r="2.5"/></g><path d="M32 46a20 20 0 0 1 14-14" stroke="#fff" stroke-width="3" fill="none" opacity=".7" stroke-linecap="round"/><path class="sp" d="M78 16l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#fff6c8"/></svg>`,
+letter:`<svg viewBox="0 0 100 100"><defs>${lg('lt1','#ffffff','#e6dccb')}</defs><g stroke="#7a5a3a" stroke-width="2.5" stroke-linejoin="round"><rect x="12" y="26" width="76" height="52" rx="6" fill="url(#lt1)"/><path d="M12 30l38 28 38-28" fill="none"/></g><path d="M12 76l30-26M88 76L58 50" stroke="#c9b79d" stroke-width="2" fill="none"/><path class="hb" d="M50 74c-14-9-12-20-5-20 3 0 5 2 5 4 0-2 2-4 5-4 7 0 9 11-5 20z" fill="#e0245e" stroke="#8c0f36" stroke-width="2"/></svg>`,
+giftbox:`<svg viewBox="0 0 100 100"><defs>${lg('gb1','#7aa8ff','#3b64d6')}${lg('gb2','#ff7a9c','#e0245e')}</defs><g stroke="#1d2f6a" stroke-width="2.5" stroke-linejoin="round"><rect x="14" y="44" width="72" height="44" rx="6" fill="url(#gb1)"/><rect x="10" y="32" width="80" height="16" rx="5" fill="url(#gb1)"/></g><g stroke="#8c0f36" stroke-width="2" stroke-linejoin="round"><rect x="43" y="32" width="14" height="56" fill="url(#gb2)"/><path d="M50 32c-18-18-30-6-18 0zM50 32c18-18 30-6 18 0z" fill="url(#gb2)"/></g><path d="M20 54h16" stroke="#fff" stroke-width="3" opacity=".5" stroke-linecap="round"/></svg>`,
+coffee:`<svg viewBox="0 0 100 100"><defs>${lg('cf1','#ffffff','#d9dde6')}</defs><path class="bb" d="M36 30q-6-8 0-14M50 30q-6-8 0-14M64 30q-6-8 0-14" fill="none" stroke="#b9c3d6" stroke-width="3" stroke-linecap="round"/><g stroke="#4a3220" stroke-width="2.5" stroke-linejoin="round"><path d="M18 40h56v26c0 14-12 24-28 24S18 80 18 66z" fill="url(#cf1)"/><path d="M74 48h8a8 8 0 0 1 0 22h-9" fill="none" stroke-width="5"/><ellipse cx="46" cy="40" rx="28" ry="6" fill="#7a4a2a"/></g><path d="M26 54v14" stroke="#fff" stroke-width="3" opacity=".7" stroke-linecap="round"/></svg>`,
+rose:`<svg viewBox="0 0 100 100"><defs>${lg('rs1','#ff5a6e','#a8102a')}</defs><path d="M50 56v38" stroke="#2f7a2a" stroke-width="5" stroke-linecap="round"/><path d="M50 82c-14 0-20-8-22-14 10-2 20 2 22 14zM50 74c12-2 20-10 22-16-12-2-20 4-22 16z" fill="#46b13c" stroke="#1f5a1c" stroke-width="2"/><g stroke="#6b0a1c" stroke-width="2.5" stroke-linejoin="round"><circle cx="50" cy="34" r="25" fill="url(#rs1)"/><path d="M50 14c-14 2-22 16-14 30 6 8 20 10 28 0 8-14 0-28-14-30z" fill="#e62e4a"/><path d="M38 34c0-10 8-14 14-12 8 2 10 12 4 18-6 6-18 2-18-6z" fill="#ff6b82"/><path d="M45 34c0-5 5-6 8-4 3 3 1 8-3 8s-5-2-5-4z" fill="#c4163a"/></g><ellipse cx="38" cy="24" rx="5" ry="3" fill="#fff" opacity=".4" transform="rotate(-30 38 24)"/></svg>`,
+cake:`<svg viewBox="0 0 100 100"><defs>${lg('ck1','#ffe3ef','#ffb7d4')}${lg('ck2','#8a4b2a','#5a2e16')}</defs><g stroke="#5a2e16" stroke-width="2.5" stroke-linejoin="round"><path d="M14 60h72v26a6 6 0 0 1-6 6H20a6 6 0 0 1-6-6z" fill="url(#ck2)"/><path d="M14 60V50c0-8 8-10 12-10h48c4 0 12 2 12 10v10c-4 6-8 0-12 6s-8 0-12 6-8 0-12 6-8 0-12 0-8 0-12 0z" fill="url(#ck1)"/></g><rect x="46" y="22" width="8" height="20" rx="2" fill="#8fd3ff" stroke="#2b6a94" stroke-width="2"/><path class="fl2" d="M50 6c6 6 6 10 0 14-6-4-6-8 0-14z" fill="#ffb02e" stroke="#e0661a" stroke-width="1.5"/><circle cx="30" cy="52" r="3" fill="#e0245e"/><circle cx="70" cy="52" r="3" fill="#e0245e"/></svg>`,
+rocket:`<svg viewBox="0 0 100 100"><defs>${lg('rk1','#ffffff','#b9c6d6')}${lg('rk2','#ff5a4d','#c1281e')}</defs><path class="ex" d="M42 78q8 20 16 0z" fill="#ffb02e"/><g stroke="#2b3a52" stroke-width="2.5" stroke-linejoin="round"><path d="M50 8c14 10 18 30 14 56H36C32 38 36 18 50 8z" fill="url(#rk1)"/><path d="M36 50L22 70l16-4zM64 50l14 20-16-4z" fill="url(#rk2)"/><path d="M50 8c8 6 12 14 14 22H36c2-8 6-16 14-22z" fill="url(#rk2)"/><circle cx="50" cy="44" r="8" fill="#6fd0ff"/><path d="M40 64h20l-3 12H43z" fill="#7b8aa0"/></g><ellipse cx="46" cy="40" rx="2.5" ry="4" fill="#fff" opacity=".7"/></svg>`,
+crown:`<svg viewBox="0 0 100 100"><defs>${lg('cr1','#fff0a0','#e0a010')}</defs><g stroke="#8a5a0b" stroke-width="2.5" stroke-linejoin="round"><path d="M12 76L8 34l22 16 20-30 20 30 22-16-4 42z" fill="url(#cr1)"/><rect x="12" y="76" width="76" height="12" rx="4" fill="url(#cr1)"/></g><circle cx="8" cy="34" r="5" fill="#ff5a6e" stroke="#8a5a0b" stroke-width="2"/><circle cx="92" cy="34" r="5" fill="#ff5a6e" stroke="#8a5a0b" stroke-width="2"/><circle cx="50" cy="20" r="6" fill="#6fd0ff" stroke="#8a5a0b" stroke-width="2"/><circle cx="30" cy="82" r="3.5" fill="#7be04a"/><circle cx="50" cy="82" r="3.5" fill="#ff5a6e"/><circle cx="70" cy="82" r="3.5" fill="#6fd0ff"/><path class="sp" d="M26 52l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/></svg>`});
+GM.bear.svg=SV.plush;GM.rose.svg=SV.rose;GM.cake.svg=SV.cake;GM.gem.svg=SV.diamond;GM.rocket.svg=SV.rocket;GM.crown.svg=SV.crown;
+[['frogh','Лягушонок с сердцем','🐸',600,500,'Эпический'],['ringbox','Кольцо в коробке','💍',1800,120,'Легендарный'],['watch','Часы','⌚',1300,250,'Легендарный'],['icecream','Мороженое','🍦',70,3000,'Обычный'],['donut','Пончик','🍩',55,3500,'Обычный'],['horseshoe','Подкова','🍀',260,1200,'Редкий'],['letter','Письмо','💌',130,2000,'Редкий'],['giftbox','Подарочная коробка','🎁',150,2000,'Редкий'],['coffee','Кофе','☕',45,4000,'Обычный']].forEach(a=>{GM[a[0]]={id:a[0],n:a[1],e:a[2],svg:SV[a[0]],price:a[3],supply:a[4],rar:a[5]};GL.push(GM[a[0]])});
+GL.sort((a,b)=>a.price-b.price);
+/* подарок рядом с ником + титул (только Премиум; другие видят их, пока у владельца Премиум) */
+function nameHTML(p){const n=esc((p&&p.name)||'?');if(!isPrem(p))return n;const g=NFX[p.nickFx];
+  let h=(g?`<span style="background:${g};-webkit-background-clip:text;background-clip:text;color:transparent">${n}</span>`:n)+' ⭐';
+  const it=p.pin&&ITEMS.find(i=>i.id===p.pin&&i.owner===p.uid),Gf=it&&GM[it.type];
+  if(Gf)h+=` <span class="pg">${uq(Gf.svg||Gf.e)}</span>`;
+  if(p.title)h+=` <span class="tt">${esc(p.title)}</span>`;return h}
+const TT=[['Новичок',()=>true,'для всех'],['Коллекционер',()=>ITEMS.filter(i=>i.owner===uid).length>=5,'иметь 5 подарков'],['Богач',()=>(P.coins||0)>=3000,'3000 🪙 на балансе'],['Постоянный',()=>(P.streak||0)>=7,'7 дней подряд'],['Популярный',()=>(P.blocks||0)>=3,'30 лайков на видео'],['Азартный',()=>ITEMS.some(i=>i.owner===uid&&i.from==='Апгрейд'),'выиграть подарок в апгрейде'],['Легенда',()=>ITEMS.some(i=>i.owner===uid&&GM[i.type]&&GM[i.type].rar==='Легендарный'),'иметь легендарный подарок']];
+function addTitles(){const b=$('#pbox');if(!b||!P||!isPrem(P))return;
+  const ok=TT.filter(t=>t[1]()).map(t=>t[0]);if(P.ctitle)ok.push(P.ctitle);
+  b.insertAdjacentHTML('beforeend','<h3 style="margin-top:12px">🏷 Титул рядом с ником</h3><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip '+(!P.title?'on':'')+'" data-tt="">Без титула</span>'+ok.map(n=>`<span class="chip ${P.title===n?'on':''}" data-tt="${esc(n)}">${esc(n)}</span>`).join('')+'</div><small style="color:var(--muted);display:block;margin-top:6px">Закрытые титулы: '+TT.filter(t=>!t[1]()).map(t=>t[0]+' — '+t[2]).join('; ')+'. Подарок рядом с ником: открой подарок в «Мои подарки» → «Показывать рядом с ником».</small>');
+  b.querySelectorAll('[data-tt]').forEach(c=>c.onclick=()=>save({title:c.dataset.tt}))}
+const _rpm=renderPrem;renderPrem=function(){_rpm();addTitles()};
+function itemMenu(e){const c=e.target.closest('.gc');if(!c)return;const it=ITEMS.find(x=>x.id===c.dataset.i);if(!it)return;
+  const g=GM[it.type],sell=Math.floor(g.price*.6);
+  modal(g.n,`<div style="width:150px;margin:auto">${card(it)}</div><button class="btn alt" id="i1">${it.shown?'Убрать из профиля':'📌 Выставить в профиль'}</button>${isPrem(P)?`<button class="btn alt" id="i4">${P.pin===it.id?'Убрать из-рядом с ником':'📍 Показывать рядом с ником'}</button>`:'<small style="text-align:center;color:var(--muted)">⭐ Подарок рядом с ником доступен с Премиумом</small>'}<button class="btn alt" id="i3">💰 Продать · ${sell} 🪙</button>`);
+  $('#i1').onclick=()=>{db.doc('items/'+it.id).update({shown:!it.shown});closeModal()};
+  if($('#i4'))$('#i4').onclick=()=>{save({pin:P.pin===it.id?'':it.id});closeModal()};
+  $('#i3').onclick=async()=>{if(!confirm('Продать за '+sell+' 🪙?'))return;closeModal();
+    try{await db.doc('items/'+it.id).delete();await save({coins:(P.coins||0)+sell});toast('+'+sell+' 🪙')}catch(er){toast('Ошибка')}}}
 
 /* ---- boot ---- */
 async function boot(){
